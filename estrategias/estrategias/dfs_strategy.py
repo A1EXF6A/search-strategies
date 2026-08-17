@@ -127,13 +127,7 @@ class DFSStrategy(Strategy):
         return children
 
     def data_structure_used(self) -> str:
-        return "Pila (list)"
-
-    def time_complexity(self) -> str:
-        return "O(b^m) donde b es el factor de ramificacion y m es la profundidad maxima del arbol"
-
-    def space_complexity(self) -> str:
-        return "O(b*m) donde b es el factor de ramificacion y m es la profundidad maxima del arbol"
+        return "Pila"
 
     def is_optimal(self) -> bool:
         return False

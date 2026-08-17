@@ -13,8 +13,7 @@ class Metrics:
         self.expanded_nodes += 1
 
     def update_frontier(self, frontier: list | deque) -> None:
-        if len(frontier) > self.max_frontier:
-            self.max_frontier = len(frontier)
+        self.max_frontier = max(self.max_frontier, len(frontier))
 
     def update_visited(self, visited: set) -> None:
         self.visited = len(visited)

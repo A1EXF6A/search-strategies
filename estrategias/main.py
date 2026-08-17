@@ -16,9 +16,9 @@ GOAL_POSITION: tuple[int, int] = (1, 10)
 
 
 def main() -> None:
-    print("--- Agente de Busqueda ---")
+    print("--- Agente de Búsqueda ---")
 
-    print("\n--- Donde empezara la busqueda? ---")
+    print("\n--- ¿Dónde empezará la búsqueda? ---")
     print("1. Ubicacion aleatoria")
     print("2. Ubicacion especifica")
 
@@ -35,7 +35,7 @@ def main() -> None:
     else:
         agent_position = (random.randint(0, MAX_X), random.randint(0, MAX_Y))
 
-    print("\n--- Resumen de la busqueda ---")
+    print("\n--- Resumen de la búsqueda ---")
 
     print(f"Posicion del agente: {agent_position}")
     print(f"Posicion del objetivo: {GOAL_POSITION}")
@@ -59,10 +59,10 @@ def main() -> None:
     elif strategy_option == "2":
         strategy = DFSStrategy()
     elif strategy_option == "3":
-        print("Busqueda iterativa no implementada.")
+        print("Búsqueda iterativa no implementada.")
         return
     elif strategy_option == "4":
-        print("Busqueda bidireccional no implementada.")
+        print("Búsqueda bidireccional no implementada.")
         return
     else:
         print("Opcion no valida. Intenta de nuevo.")

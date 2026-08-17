@@ -13,6 +13,14 @@ class Strategy(ABC):
         self.metrics: Metrics = Metrics()
 
     @abstractmethod
+    def data_structure_used(self) -> str:
+        pass
+
+    @abstractmethod
+    def is_optimal(self) -> bool:
+        pass
+
+    @abstractmethod
     def search(
         self,
         start: tuple[int, int],

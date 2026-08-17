@@ -128,13 +128,7 @@ class BFSStrategy(Strategy):
         return children
 
     def data_structure_used(self) -> str:
-        return "Cola (deque)"
-
-    def time_complexity(self) -> str:
-        return "O(b^d) donde b es el factor de ramificacion y d es la profundidad del nivel con la solucion"
-
-    def space_complexity(self) -> str:
-        return "O(b^d) donde b es el factor de ramificacion y d es la profundidad del nivel con la solucion"
+        return "Cola"
 
     def is_optimal(self) -> bool:
         return True
