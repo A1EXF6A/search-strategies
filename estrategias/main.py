@@ -14,6 +14,10 @@ MAX_Y: int = 20
 
 GOAL_POSITION: tuple[int, int] = (1, 10)
 
+RESET: str = "\033[0m"
+GREEN: str = "\033[92m"
+YELLOW: str = "\033[93m"
+
 
 def main() -> None:
     print("--- Agente de Búsqueda ---")
@@ -77,9 +81,7 @@ def main() -> None:
         agent_position, GOAL_POSITION, MAX_X, MAX_Y
     )
 
-    print("\n" + "=" * 50)
-    print("ARBOL DE BUSQUEDA")
-    print("=" * 50)
+    print(f"{GREEN}--- ARBOL DE BUSQUEDA ---{RESET}")
 
     goal_nodes: list[Node] = []
     for sol in all_solutions:
@@ -94,9 +96,12 @@ def main() -> None:
         print("\nNo se encontro ninguna solucion.")
         return
 
-    print("\n" + "=" * 50)
-    print("SOLUCION OPTIMA")
-    print("=" * 50)
+    print()
+    print(f"{GREEN}--- MAPA ---{RESET}")
+    print_map(agent_position, GOAL_POSITION)
+
+    print()
+    print(f"{GREEN}--- SOLUCION OPTIMA ---{RESET}")
 
     print_path(optimal_path)
     print_metrics(strategy, metrics, optimal_path)
@@ -131,7 +136,8 @@ def print_metrics(strategy: Strategy, metrics: Metrics, path: list[Node]) -> Non
     elif isinstance(strategy, DFSStrategy):
         strategy_name = "Búsqueda por profundidad"
 
-    print("\nPARAMETROS")
+    print()
+    print(f"{GREEN}--- METRICAS ---{RESET}")
     print(f"Algoritmo: {strategy_name}")
     print(f"Estructura utilizada: {strategy.data_structure_used()}")
     print(f"Profundidad: {path[-1].depth}")
