@@ -147,10 +147,6 @@ def print_metrics(strategy: Strategy, metrics: Metrics, path: list[Node]) -> Non
     elif isinstance(strategy, DFSStrategy):
         strategy_name = "Búsqueda por profundidad"
 
-    optimality: str = (
-        f"{GREEN}Si{RESET}" if strategy.is_optimal() else f"{YELLOW}No{RESET}"
-    )
-
     print()
     print(f"{GREEN}--- METRICAS ---{RESET}")
     print()
@@ -168,7 +164,6 @@ def print_metrics(strategy: Strategy, metrics: Metrics, path: list[Node]) -> Non
     print(
         f"Formula: {metrics.total_nodes} nodos x {Metrics.bytes_per_node} bytes = {metrics.memory_bytes()} bytes = {metrics.memory_mib():.6f} MiB"
     )
-    print(f"Es optima: {optimality}")
 
 
 def print_map(agent_position: tuple[int, int], goal_position: tuple[int, int]) -> None:

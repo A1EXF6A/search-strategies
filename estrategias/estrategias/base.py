@@ -18,10 +18,6 @@ class Strategy(ABC):
         pass
 
     @abstractmethod
-    def is_optimal(self) -> bool:
-        pass
-
-    @abstractmethod
     def search(
         self,
         start: tuple[int, int],

@@ -143,6 +143,3 @@ class BFSStrategy(Strategy):
 
     def data_structure_used(self) -> str:
         return "Cola"
-
-    def is_optimal(self) -> bool:
-        return True

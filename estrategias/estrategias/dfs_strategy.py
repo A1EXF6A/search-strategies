@@ -39,13 +39,15 @@ class DFSStrategy(Strategy):
 
             if current.position in visited:
                 continue
-            visited.add(current.position)
-            self.metrics.update_visited(visited)
-            self.metrics.expand()
 
             if current.is_goal(goal):
                 solutions.append(current.path())
+                self.metrics.expand()
                 continue
+
+            visited.add(current.position)
+            self.metrics.update_visited(visited)
+            self.metrics.expand()
 
             children: list[Node] = self._generate_children(current, goal, max_x, max_y)
             current.children = children
@@ -85,12 +87,14 @@ class DFSStrategy(Strategy):
 
             if current.position in visited:
                 continue
-            visited.add(current.position)
-            temp_metrics.expand()
 
             if current.is_goal(goal):
                 solutions.append(current.path())
+                temp_metrics.expand()
                 continue
+
+            visited.add(current.position)
+            temp_metrics.expand()
 
             children: list[Node] = self._generate_children(current, goal, max_x, max_y)
             current.children = children
@@ -128,6 +132,3 @@ class DFSStrategy(Strategy):
 
     def data_structure_used(self) -> str:
         return "Pila"
-
-    def is_optimal(self) -> bool:
-        return False
