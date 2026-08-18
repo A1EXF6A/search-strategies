@@ -143,3 +143,9 @@ class BFSStrategy(Strategy):
 
     def data_structure_used(self) -> str:
         return "Cola"
+
+    def time_complexity(self) -> str:
+        return "O(b^d)"
+
+    def space_complexity(self) -> str:
+        return "O(b^d)"

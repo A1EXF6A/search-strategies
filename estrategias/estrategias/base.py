@@ -18,6 +18,14 @@ class Strategy(ABC):
         pass
 
     @abstractmethod
+    def time_complexity(self) -> str:
+        pass
+
+    @abstractmethod
+    def space_complexity(self) -> str:
+        pass
+
+    @abstractmethod
     def search(
         self,
         start: tuple[int, int],
@@ -40,7 +48,9 @@ class Strategy(ABC):
         end_time: float = time.perf_counter()
         self.metrics.execution_time = end_time - start_time
         self.metrics.set_generated_nodes(Node._counter)
+        saved_metrics: Metrics = self.metrics.copy()
         all_solutions: list[list[Node]] = self._search_all(start, goal, max_x, max_y)
+        self.metrics = saved_metrics
         return optimal_path, all_solutions, self.tree, self.metrics
 
     @abstractmethod

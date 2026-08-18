@@ -132,3 +132,9 @@ class DFSStrategy(Strategy):
 
     def data_structure_used(self) -> str:
         return "Pila"
+
+    def time_complexity(self) -> str:
+        return "O(b^m)"
+
+    def space_complexity(self) -> str:
+        return "O(b*m)"

@@ -5,7 +5,9 @@ import random
 
 from estrategias.base import Strategy
 from estrategias.bfs_strategy import BFSStrategy
+from estrategias.bidirectional_strategy import BidirectionalStrategy
 from estrategias.dfs_strategy import DFSStrategy
+from estrategias.iddfs_strategy import IDDFSStrategy
 from estrategias.metrics import Metrics
 from estrategias.node import Node
 from estrategias.tree import Tree
@@ -64,11 +66,9 @@ def main() -> None:
     elif strategy_option == "2":
         strategy = DFSStrategy()
     elif strategy_option == "3":
-        print("Búsqueda iterativa no implementada.")
-        return
+        strategy = IDDFSStrategy()
     elif strategy_option == "4":
-        print("Búsqueda bidireccional no implementada.")
-        return
+        strategy = BidirectionalStrategy()
     else:
         print("Opcion no valida. Intenta de nuevo.")
         return
@@ -146,6 +146,10 @@ def print_metrics(strategy: Strategy, metrics: Metrics, path: list[Node]) -> Non
         strategy_name = "Búsqueda por anchura"
     elif isinstance(strategy, DFSStrategy):
         strategy_name = "Búsqueda por profundidad"
+    elif isinstance(strategy, IDDFSStrategy):
+        strategy_name = "Búsqueda por profundidad iterativa"
+    elif isinstance(strategy, BidirectionalStrategy):
+        strategy_name = "Búsqueda bidireccional"
 
     print()
     print(f"{GREEN}--- METRICAS ---{RESET}")
@@ -164,10 +168,10 @@ def print_metrics(strategy: Strategy, metrics: Metrics, path: list[Node]) -> Non
         f"  ({metrics.generated_nodes} nodos x {Metrics.bytes_per_node} bytes = {metrics.memory_bytes()} bytes)"
     )
     print()
-    print(f"{GREEN}--- COMPLEJIDAD ASINTÓTICA ---{RESET}")
+    print(f"{GREEN}--- COMPLEJIDAD ASINTOTICA ---{RESET}")
     print()
-    print("Tiempo:                     O(b^d)")
-    print("Espacio:                    O(b^d)")
+    print(f"Tiempo:                     {strategy.time_complexity()}")
+    print(f"Espacio:                    {strategy.space_complexity()}")
 
 
 def print_map(agent_position: tuple[int, int], goal_position: tuple[int, int]) -> None:
