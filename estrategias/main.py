@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import random
 
 from estrategias.base import Strategy
@@ -39,7 +40,7 @@ def main() -> None:
     else:
         agent_position = (random.randint(0, MAX_X), random.randint(0, MAX_Y))
 
-    print("\n--- Resumen de la búsqueda ---")
+    print(f"\n{YELLOW}--- INFORMACION ---{RESET}\n")
 
     print(f"Posicion del agente: {agent_position}")
     print(f"Posicion del objetivo: {GOAL_POSITION}")
@@ -72,6 +73,8 @@ def main() -> None:
         print("Opcion no valida. Intenta de nuevo.")
         return
 
+    os.system("clear" if os.name == "posix" else "cls")
+
     optimal_path: list[Node]
     all_solutions: list[list[Node]]
     tree: Tree
@@ -81,35 +84,22 @@ def main() -> None:
         agent_position, GOAL_POSITION, MAX_X, MAX_Y
     )
 
-    print(f"{GREEN}--- ARBOL DE BUSQUEDA ---{RESET}")
+    # print(f"{GREEN}--- ARBOL DE BUSQUEDA ---{RESET}")
+
+    # tree.print(optimal_path, goal_nodes)
+
+    print(f"\n{GREEN}--- SOLUCIONES ENCONTRADAS ---{RESET}")
 
     goal_nodes: list[Node] = []
     for sol in all_solutions:
         if sol:
             goal_nodes.append(sol[-1])
 
-    tree.print(optimal_path, goal_nodes)
-
     print(f"\nTotal de soluciones encontradas: {len(all_solutions)}")
 
-    if not optimal_path:
-        print("\nNo se encontro ninguna solucion.")
-        return
-
-    print()
-    print(f"{GREEN}--- MAPA ---{RESET}")
-    print_map(agent_position, GOAL_POSITION)
-
-    print()
-    print(f"{GREEN}--- SOLUCION OPTIMA ---{RESET}")
-
-    print_path(optimal_path)
-    print_metrics(strategy, metrics, optimal_path)
-
     if len(all_solutions) > 1:
-        print("\n" + "=" * 50)
-        print("OTRAS SOLUCIONES")
-        print("=" * 50)
+        print()
+        print(f"{YELLOW}--- OTRAS SOLUCIONES ---{RESET}")
 
         counter: int = 1
         for i, sol in enumerate(all_solutions):
@@ -119,6 +109,27 @@ def main() -> None:
             print(f"\n--- Solucion alternativa {counter} ---")
             print_path(sol)
             counter += 1
+
+    print()
+    print(f"{GREEN}--- SOLUCION OPTIMA ---{RESET}")
+    print()
+
+    print_path(optimal_path)
+
+    if not optimal_path:
+        print("\nNo se encontro ninguna solucion.")
+        return
+
+    print()
+    print(f"{GREEN}--- MAPA ---{RESET}")
+    print()
+
+    print(f"Posicion del agente: {agent_position}")
+    print(f"Posicion del objetivo: {GOAL_POSITION}")
+
+    print_map(agent_position, GOAL_POSITION)
+
+    print_metrics(strategy, metrics, optimal_path)
 
 
 def print_path(path: list[Node]) -> None:
@@ -136,16 +147,28 @@ def print_metrics(strategy: Strategy, metrics: Metrics, path: list[Node]) -> Non
     elif isinstance(strategy, DFSStrategy):
         strategy_name = "Búsqueda por profundidad"
 
+    optimality: str = (
+        f"{GREEN}Si{RESET}" if strategy.is_optimal() else f"{YELLOW}No{RESET}"
+    )
+
     print()
     print(f"{GREEN}--- METRICAS ---{RESET}")
+    print()
     print(f"Algoritmo: {strategy_name}")
     print(f"Estructura utilizada: {strategy.data_structure_used()}")
     print(f"Profundidad: {path[-1].depth}")
-    print(f"Cantidad de pasos: {len(path) - 1}")
-    print(f"Estados en el camino: {len(path)}")
-    print(f"Complejidad en tiempo: {metrics.expanded_nodes}")
-    print(f"Complejidad en espacio: {metrics.space()}")
-    print(f"Es optima: {'Si' if strategy.is_optimal() else 'No'}")
+    print(f"Movimientos realizados: {len(path) - 1}")
+    print(f"Nodos expandidos: {metrics.expanded_nodes}")
+    print()
+    print(f"Complejidad en tiempo: {metrics.execution_time:.6f} segundos")
+    print()
+    print(f"Tamano estimado por nodo: {Metrics.bytes_per_node} bytes")
+
+    print(f"Total de nodos creados: {metrics.total_nodes}")
+    print(
+        f"Formula: {metrics.total_nodes} nodos x {Metrics.bytes_per_node} bytes = {metrics.memory_bytes()} bytes = {metrics.memory_mib():.6f} MiB"
+    )
+    print(f"Es optima: {optimality}")
 
 
 def print_map(agent_position: tuple[int, int], goal_position: tuple[int, int]) -> None:

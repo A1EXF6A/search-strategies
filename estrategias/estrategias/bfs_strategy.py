@@ -7,10 +7,10 @@ from estrategias.metrics import Metrics
 from estrategias.node import Node
 
 MOVEMENTS: list[tuple[str, int, int]] = [
-    ("UP", -1, 0),
-    ("DOWN", 1, 0),
-    ("LEFT", 0, -1),
-    ("RIGHT", 0, 1),
+    ("UP", 0, 1),
+    ("DOWN", 0, -1),
+    ("LEFT", -1, 0),
+    ("RIGHT", 1, 0),
 ]
 
 
@@ -35,6 +35,7 @@ class BFSStrategy(Strategy):
 
         visited: set[tuple[int, int]] = set()
         solutions: list[list[Node]] = []
+        found_depth: int = -1
 
         while self.queue:
             self.metrics.update_frontier(self.queue)
@@ -42,13 +43,19 @@ class BFSStrategy(Strategy):
 
             if current.position in visited:
                 continue
-            visited.add(current.position)
-            self.metrics.update_visited(visited)
-            self.metrics.expand()
+
+            if found_depth != -1 and current.depth > found_depth:
+                break
 
             if current.is_goal(goal):
                 solutions.append(current.path())
+                found_depth = current.depth
+                self.metrics.expand()
                 continue
+
+            visited.add(current.position)
+            self.metrics.update_visited(visited)
+            self.metrics.expand()
 
             children: list[Node] = self._generate_children(current, goal, max_x, max_y)
             current.children = children
@@ -80,18 +87,25 @@ class BFSStrategy(Strategy):
 
         visited: set[tuple[int, int]] = set()
         solutions: list[list[Node]] = []
+        found_depth: int = -1
 
         while temp_queue:
             current: Node = temp_queue.popleft()
 
             if current.position in visited:
                 continue
-            visited.add(current.position)
-            temp_metrics.expand()
+
+            if found_depth != -1 and current.depth > found_depth:
+                break
 
             if current.is_goal(goal):
                 solutions.append(current.path())
+                found_depth = current.depth
+                temp_metrics.expand()
                 continue
+
+            visited.add(current.position)
+            temp_metrics.expand()
 
             children: list[Node] = self._generate_children(current, goal, max_x, max_y)
             current.children = children
