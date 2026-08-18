@@ -10,6 +10,7 @@ class Metrics:
     bytes_per_node: int = 0
 
     def __init__(self) -> None:
+        self.generated_nodes: int = 0
         self.expanded_nodes: int = 0
         self.max_frontier: int = 0
         self.visited: int = 0
@@ -28,6 +29,9 @@ class Metrics:
         action_size: int = sys.getsizeof(temp_node.action)
         return base_size + dict_size + position_size + children_size + action_size
 
+    def generate(self, count: int = 1) -> None:
+        self.generated_nodes += count
+
     def expand(self) -> None:
         self.expanded_nodes += 1
 
@@ -37,7 +41,8 @@ class Metrics:
     def update_visited(self, visited: set) -> None:
         self.visited = len(visited)
 
-    def set_total_nodes(self, count: int) -> None:
+    def set_generated_nodes(self, count: int) -> None:
+        self.generated_nodes = count
         self.total_nodes = count
 
     def memory_bytes(self) -> int:
@@ -48,6 +53,7 @@ class Metrics:
 
     def copy(self) -> Metrics:
         new_metrics: Metrics = Metrics()
+        new_metrics.generated_nodes = self.generated_nodes
         new_metrics.expanded_nodes = self.expanded_nodes
         new_metrics.max_frontier = self.max_frontier
         new_metrics.visited = self.visited

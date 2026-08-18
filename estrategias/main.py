@@ -84,16 +84,16 @@ def main() -> None:
         agent_position, GOAL_POSITION, MAX_X, MAX_Y
     )
 
-    # print(f"{GREEN}--- ARBOL DE BUSQUEDA ---{RESET}")
-
-    # tree.print(optimal_path, goal_nodes)
-
-    print(f"\n{GREEN}--- SOLUCIONES ENCONTRADAS ---{RESET}")
-
     goal_nodes: list[Node] = []
     for sol in all_solutions:
         if sol:
             goal_nodes.append(sol[-1])
+
+    print(f"{GREEN}--- ARBOL DE BUSQUEDA ---{RESET}")
+
+    tree.print(optimal_path, goal_nodes)
+
+    print(f"\n{GREEN}--- SOLUCIONES ENCONTRADAS ---{RESET}")
 
     print(f"\nTotal de soluciones encontradas: {len(all_solutions)}")
 
@@ -152,18 +152,22 @@ def print_metrics(strategy: Strategy, metrics: Metrics, path: list[Node]) -> Non
     print()
     print(f"Algoritmo: {strategy_name}")
     print(f"Estructura utilizada: {strategy.data_structure_used()}")
-    print(f"Profundidad: {path[-1].depth}")
-    print(f"Movimientos realizados: {len(path) - 1}")
-    print(f"Nodos expandidos: {metrics.expanded_nodes}")
     print()
-    print(f"Complejidad en tiempo: {metrics.execution_time:.6f} segundos")
+    print(f"Nodos generados:            {metrics.generated_nodes}")
+    print(f"Nodos expandidos:           {metrics.expanded_nodes}")
+    print(f"Maximo en frontera:         {metrics.max_frontier}")
+    print(f"Profundidad solucion:       {path[-1].depth}")
     print()
-    print(f"Tamano estimado por nodo: {Metrics.bytes_per_node} bytes")
-
-    print(f"Total de nodos creados: {metrics.total_nodes}")
+    print(f"Tiempo de ejecucion:        {metrics.execution_time:.6f} s")
+    print(f"Memoria utilizada:          {metrics.memory_mib():.6f} MiB")
     print(
-        f"Formula: {metrics.total_nodes} nodos x {Metrics.bytes_per_node} bytes = {metrics.memory_bytes()} bytes = {metrics.memory_mib():.6f} MiB"
+        f"  ({metrics.generated_nodes} nodos x {Metrics.bytes_per_node} bytes = {metrics.memory_bytes()} bytes)"
     )
+    print()
+    print(f"{GREEN}--- COMPLEJIDAD ASINTÓTICA ---{RESET}")
+    print()
+    print("Tiempo:                     O(b^d)")
+    print("Espacio:                    O(b^d)")
 
 
 def print_map(agent_position: tuple[int, int], goal_position: tuple[int, int]) -> None:

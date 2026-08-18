@@ -39,7 +39,7 @@ class Strategy(ABC):
         optimal_path: list[Node] = self.search(start, goal, max_x, max_y)
         end_time: float = time.perf_counter()
         self.metrics.execution_time = end_time - start_time
-        self.metrics.set_total_nodes(Node._counter)
+        self.metrics.set_generated_nodes(Node._counter)
         all_solutions: list[list[Node]] = self._search_all(start, goal, max_x, max_y)
         return optimal_path, all_solutions, self.tree, self.metrics
 
