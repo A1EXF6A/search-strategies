@@ -13,13 +13,6 @@ MOVEMENTS: list[tuple[str, int, int]] = [
     ("RIGHT", 1, 0),
 ]
 
-REVERSE_MOVEMENTS: dict[str, str] = {
-    "UP": "DOWN",
-    "DOWN": "UP",
-    "LEFT": "RIGHT",
-    "RIGHT": "LEFT",
-}
-
 
 class BidirectionalStrategy(Strategy):
     def __init__(self) -> None:
@@ -210,7 +203,7 @@ class BidirectionalStrategy(Strategy):
                 child: Node = Node(
                     position=new_position,
                     parent=node,
-                    action=REVERSE_MOVEMENTS.get(action, action),
+                    action=action,
                     cost=node.cost + 1,
                     depth=node.depth + 1,
                 )

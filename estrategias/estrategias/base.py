@@ -43,9 +43,13 @@ class Strategy(ABC):
         max_y: int,
     ) -> tuple[list[Node], list[list[Node]], Tree, Metrics]:
         Node.reset_counter()
+
         start_time: float = time.perf_counter()
+
         optimal_path: list[Node] = self.search(start, goal, max_x, max_y)
+
         end_time: float = time.perf_counter()
+
         self.metrics.execution_time = end_time - start_time
         self.metrics.set_generated_nodes(Node._counter)
         saved_metrics: Metrics = self.metrics.copy()
