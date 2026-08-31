@@ -1,0 +1,3 @@
+Okey tengo algunas dudas:
+Que es el frente pareto, porque segun el codigo veo que eliges los elementos con un ranking de 1, osea los mejores, esos son el frente 1, solo comparas esos?
+Note dos variables: last_mutation_individual, y last_mutation_foco, no encontre en donde los usas aparte de donde asignas un valor para las mismas, para que sirven?

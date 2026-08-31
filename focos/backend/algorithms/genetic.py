@@ -8,6 +8,10 @@ UNIFORM_WEIGHT = 0.5
 
 MUTATION_PROBABILITY = 0.3
 
+MAX_EPOCHS = 100
+
+PATIENCE = 10
+
 
 class GeneticAlgorithm:
     population: NDArray
@@ -21,6 +25,11 @@ class GeneticAlgorithm:
 
     last_mutation_individual: int
     last_mutation_foco: int
+
+    epoch: int
+    patience_without_improvement: int
+    previous_front: NDArray
+    best_front: NDArray
 
     rng: numpy.random.Generator
 
@@ -36,6 +45,9 @@ class GeneticAlgorithm:
 
         self.room = Room(UNIFORM_WEIGHT)
 
+        self.epoch = 0
+        self.patience_without_improvement = 0
+
         # 1. Define initial population
 
         self.set_initial_population()
@@ -48,14 +60,66 @@ class GeneticAlgorithm:
 
         ranking: NDArray = self.pareto_ranking(self.objetives)
 
+        # Save the initial Pareto front as a reference
+
+        self.previous_front = self.pareto_front(ranking)
+        self.best_front = self.previous_front.copy()
+
+        print(f"Frente Pareto inicial (época {self.epoch}): {self.previous_front}")
+
+        # 2-6. Evolution loop
+
+        while not self.stopping_condition():
+            self.epoch += 1
+
+            # 2. Select parents based on Pareto ranking
+
+            ranking = self.pareto_ranking(self.objetives)
+
+            probability: NDArray = self.compute_probabilities(ranking)
+
+            self.build_roulette(probability)
+
+            parent_1: int
+            parent_2: int
+
+            parent_1, parent_2 = self.select_parents()
+
+            # 3. Crossover: apply single-point crossover to produce two children
+
+            self.crossover(parent_1, parent_2)
+
+            # 4. Mutation: with probability MUTATION_PROBABILITY, flip one foco
+
+            self.mutate()
+
+            # 5. Replacement: remove two individuals at random from the 22
+            #    candidates (20 population + 2 children) to go back to 20
+
+            self.replacement()
+
+            # 5.1 Re-evaluate fitness of the new population
+
+            self.evaluate_fitness()
+
+            # 6. Detention: recompute the Pareto front and compare with the
+            #    previous generation; update patience.
+
+            self.check_improvement()
+
+            print(
+                f"Época {self.epoch} finalizada - paciencia: "
+                f"{self.patience_without_improvement}"
+            )
+
+        print(f"Algoritmo detenido en época {self.epoch}")
+        print(f"Mejor frente Pareto encontrado: {self.best_front}")
+
+    def compute_probabilities(self, ranking: NDArray) -> NDArray:
         total_ranking: float = 0.0
 
         for i in range(POPULATION_SIZE):
             total_ranking += POPULATION_SIZE - (ranking[i] - 1)
-
-        # 2. Select parents for crossover
-
-        # 2.1 Define probability distribution based on Pareto ranking
 
         probability: NDArray = numpy.zeros(POPULATION_SIZE, dtype=numpy.int64)
 
@@ -72,37 +136,7 @@ class GeneticAlgorithm:
             rnd_index = self.rng.integers(0, POPULATION_SIZE)
             probability[rnd_index] += 100 - probability.sum()
 
-        # 2.2 Build the roulette wheel: an array of 100 elements where each
-        # individual appears as many times as its probability dictates,
-        # distributed randomly across the array.
-
-        self.build_roulette(probability)
-
-        # 2.3 Select parents: pick two random indices into the roulette.
-
-        parent_1: int
-        parent_2: int
-
-        parent_1, parent_2 = self.select_parents()
-
-        # 3. Crossover: apply single-point crossover to produce two children
-
-        children: NDArray = self.crossover(parent_1, parent_2)
-
-        print(f"  Hijo 1: {children[0]}")
-        print(f"  Hijo 2: {children[1]}")
-
-        # 4. Mutation: with probability MUTATION_PROBABILITY, flip one foco
-
-        self.mutate()
-
-        if self.last_mutation_individual == -1:
-            print(f"Mutación (probabilidad {MUTATION_PROBABILITY}): no hubo mutación")
-        else:
-            print(
-                f"Mutación (probabilidad {MUTATION_PROBABILITY}): mutó el individuo "
-                f"{self.last_mutation_individual} (foco índice {self.last_mutation_foco})"
-            )
+        return probability
 
     def build_roulette(self, probability: NDArray) -> None:
         self.roulette = numpy.zeros(100, dtype=numpy.int64)
@@ -168,6 +202,63 @@ class GeneticAlgorithm:
         else:
             self.last_mutation_individual = -1
             self.last_mutation_foco = -1
+
+    def replacement(self) -> None:
+        candidates: NDArray = numpy.concatenate((self.population, self.children))
+
+        first_removed: int = int(self.rng.integers(0, candidates.shape[0]))
+
+        second_removed: int = int(self.rng.integers(0, candidates.shape[0]))
+        while second_removed == first_removed:
+            second_removed = int(self.rng.integers(0, candidates.shape[0]))
+
+        survivors: NDArray = numpy.delete(
+            candidates, [first_removed, second_removed], axis=0
+        )
+
+        self.population = survivors.copy()
+
+    def pareto_front(self, ranking: NDArray) -> NDArray:
+        indices: NDArray = numpy.where(ranking == 1)[0]
+        return self.objetives[indices].copy()
+
+    def check_improvement(self) -> None:
+        ranking: NDArray = self.pareto_ranking(self.objetives)
+        current_front: NDArray = self.pareto_front(ranking)
+
+        improved: bool = self.front_improved(self.previous_front, current_front)
+
+        if improved:
+            self.patience_without_improvement = 0
+            self.best_front = current_front.copy()
+        else:
+            self.patience_without_improvement += 1
+
+        self.previous_front = current_front.copy()
+
+    def front_improved(self, previous_front: NDArray, current_front: NDArray) -> bool:
+        for current_solution in current_front:
+            for previous_solution in previous_front:
+                if self.dominates(current_solution, previous_solution):
+                    return True
+
+        return False
+
+    def dominates(self, a: NDArray, b: NDArray) -> bool:
+        lighting_a: float = float(a[0])
+        cost_a: float = float(a[1])
+        lighting_b: float = float(b[0])
+        cost_b: float = float(b[1])
+
+        return (lighting_a >= lighting_b and cost_a <= cost_b) and (
+            lighting_a > lighting_b or cost_a < cost_b
+        )
+
+    def stopping_condition(self) -> bool:
+        if self.epoch >= MAX_EPOCHS:
+            return True
+
+        return self.patience_without_improvement >= PATIENCE
 
     def set_initial_population(self):
         for i in range(POPULATION_SIZE):
