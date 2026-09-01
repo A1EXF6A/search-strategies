@@ -40,8 +40,40 @@ class LocalSearch:
         print(f"Búsqueda local terminada en {self.steps} pasos")
         print(f"Mejor estado encontrado: {self.best_state} "
               f"-> fitness {self.best_fitness:.4f}")
-        print(f"  Iluminación: {self.room.lighting(self.best_state):.4f}")
-        print(f"  Costo:       {self.room.cost(self.best_state):.4f}")
+
+    def solve(self) -> dict:
+        self.rng = numpy.random.default_rng()
+
+        self.room = Room(UNIFORM_WEIGHT)
+
+        self.steps = 0
+
+        self.initialize()
+
+        self.hill_climb(verbose=False)
+
+        return self.result_dict()
+
+    def result_dict(self) -> dict:
+        individual: NDArray = self.best_state
+
+        metrics: dict[str, float] = self.room.metrics(individual)
+
+        focos: list[int] = [int(value) for value in individual]
+
+        return {
+            "focos": focos,
+            "focos_encendidos": int(numpy.sum(individual)),
+            "iluminacion": float(metrics["lighting"]),
+            "iluminacion_promedio": float(metrics["avg_lighting"]),
+            "iluminacion_minima": float(metrics["min_lighting"]),
+            "uniformidad": float(metrics["uniformity"]),
+            "costo": float(metrics["cost"]),
+            "potencia_w": 15.0,
+            "tiempo_h": 5.0,
+            "energia_kwh": float(metrics["consumed_energy"]),
+            "costo_por_foco": float(metrics["cost_per_lightbulb"]),
+        }
 
     def initialize(self) -> None:
         self.current_state = numpy.zeros(6, dtype=numpy.byte)
@@ -71,7 +103,7 @@ class LocalSearch:
 
         return neighbors
 
-    def hill_climb(self) -> None:
+    def hill_climb(self, verbose: bool = True) -> None:
         improved: bool = True
 
         while improved:
@@ -92,9 +124,10 @@ class LocalSearch:
             if best_neighbor_index != -1:
                 best_neighbor: NDArray = neighbors[best_neighbor_index]
 
-                print(f"  Paso {self.steps + 1}: estado {self.current_state} "
-                      f"(fitness {self.current_fitness:.4f}) -> "
-                      f"mejor vecino {best_neighbor} (fitness {best_neighbor_fitness:.4f})")
+                if verbose:
+                    print(f"  Paso {self.steps + 1}: estado {self.current_state} "
+                          f"(fitness {self.current_fitness:.4f}) -> "
+                          f"mejor vecino {best_neighbor} (fitness {best_neighbor_fitness:.4f})")
 
                 self.current_state = best_neighbor
                 self.current_fitness = best_neighbor_fitness

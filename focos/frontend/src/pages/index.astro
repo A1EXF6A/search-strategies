@@ -158,123 +158,6 @@ import "@fontsource/geist-mono/500.css";
 			margin-bottom: 10px;
 		}
 
-		.foco-list {
-			display: flex;
-			flex-direction: column;
-			gap: 6px;
-		}
-
-		.foco-row {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			padding: 10px 12px;
-			background: var(--surface-card);
-			border: 1px solid color-mix(in srgb, var(--edge) 60%, transparent);
-			border-radius: 8px;
-			cursor: pointer;
-			transition: background-color .16s var(--ease-out), border-color .16s var(--ease-out);
-		}
-
-		.foco-row:hover {
-			background: var(--surface-hover);
-		}
-
-		.foco-row.on {
-			border-color: color-mix(in srgb, var(--accent) 28%, var(--edge));
-		}
-
-		.foco-name {
-			display: flex;
-			align-items: center;
-			gap: 10px;
-			font-size: 14px;
-			font-weight: 500;
-			color: var(--primary);
-		}
-
-		.foco-name .id {
-			font-family: "Geist Mono", ui-monospace, monospace;
-			font-size: 10px;
-			color: var(--muted);
-			background: var(--surface-raised);
-			border: 1px solid var(--edge);
-			border-radius: 4px;
-			padding: 2px 5px;
-		}
-
-		.foco-dot {
-			width: 10px;
-			height: 10px;
-			border-radius: 50%;
-			background: var(--edge-subtle);
-			transition: background .16s var(--ease-out), box-shadow .16s var(--ease-out);
-		}
-
-		.foco-row.on .foco-dot {
-			background: var(--accent);
-			box-shadow: 0 0 8px 1px color-mix(in srgb, var(--accent) 60%, transparent);
-		}
-
-		.foco-status {
-			font-family: "Geist Mono", ui-monospace, monospace;
-			font-size: 10px;
-			text-transform: uppercase;
-			letter-spacing: 0.06em;
-			color: var(--muted);
-		}
-
-		.foco-row.on .foco-status {
-			color: var(--accent);
-		}
-
-		/* switch */
-		.switch {
-			position: relative;
-			width: 40px;
-			height: 22px;
-			flex-shrink: 0;
-		}
-
-		.switch input {
-			opacity: 0;
-			width: 0;
-			height: 0;
-			position: absolute;
-		}
-
-		.slider {
-			position: absolute;
-			inset: 0;
-			background: var(--edge-subtle);
-			border: 1px solid var(--edge);
-			border-radius: 999px;
-			cursor: pointer;
-			transition: background-color .16s var(--ease-out), border-color .16s var(--ease-out);
-		}
-
-		.slider::before {
-			content: "";
-			position: absolute;
-			width: 16px;
-			height: 16px;
-			left: 2px;
-			top: 2px;
-			background: var(--muted);
-			border-radius: 50%;
-			transition: transform .16s var(--ease-out), background-color .16s var(--ease-out);
-		}
-
-		.switch input:checked + .slider {
-			background: color-mix(in srgb, var(--accent) 22%, var(--surface-card));
-			border-color: color-mix(in srgb, var(--accent) 45%, var(--edge));
-		}
-
-		.switch input:checked + .slider::before {
-			transform: translateX(18px);
-			background: var(--accent);
-		}
-
 		.actions {
 			display: flex;
 			flex-direction: column;
@@ -318,71 +201,88 @@ import "@fontsource/geist-mono/500.css";
 			border-color: color-mix(in srgb, var(--primary) 30%, var(--edge));
 		}
 
-		.radius-group {
+		.btn-opt {
+			background: var(--surface-card);
+			color: var(--warm);
+			border-color: color-mix(in srgb, var(--warm) 40%, var(--edge));
+		}
+
+		.btn-opt:hover {
+			background: color-mix(in srgb, var(--warm) 10%, var(--surface-card));
+			border-color: var(--warm);
+		}
+
+		.btn-opt:disabled {
+			opacity: 0.55;
+			cursor: not-allowed;
+			color: var(--muted);
+			border-color: var(--edge);
+			background: var(--surface-card);
+		}
+
+		/* ---------- Result metrics ---------- */
+		.metrics {
 			display: flex;
 			flex-direction: column;
-			gap: 12px;
+			gap: 10px;
 		}
 
-		.radius-row {
+		.metric-empty {
+			font-family: "Geist Mono", ui-monospace, monospace;
+			font-size: 11px;
+			color: var(--muted);
+			padding: 12px;
+			border: 1px dashed var(--edge);
+			border-radius: 8px;
+			text-align: center;
+		}
+
+		.metric {
 			display: flex;
-			align-items: center;
 			justify-content: space-between;
-			font-size: 12px;
-			color: var(--secondary);
+			align-items: center;
+			gap: 12px;
+			padding: 9px 12px;
+			background: var(--surface-card);
+			border: 1px solid color-mix(in srgb, var(--edge) 60%, transparent);
+			border-radius: 8px;
 		}
 
-		.mono-label {
+		.metric-label {
 			font-family: "Geist Mono", ui-monospace, monospace;
 			font-size: 10px;
 			text-transform: uppercase;
-			letter-spacing: 0.06em;
-			color: var(--muted);
+			letter-spacing: 0.05em;
+			color: var(--secondary);
 		}
 
-		.radius-value {
+		.metric-value {
 			font-family: "Geist Mono", ui-monospace, monospace;
 			font-size: 13px;
 			font-weight: 500;
-			color: var(--primary);
+			color: var(--warm);
 			font-variant-numeric: tabular-nums;
+			text-align: right;
 		}
 
-		input[type="range"] {
-			-webkit-appearance: none;
-			appearance: none;
-			width: 100%;
-			height: 3px;
-			border-radius: 999px;
+		.metric-focos {
+			display: flex;
+			gap: 5px;
+			align-items: center;
+		}
+
+		.metric-foco {
+			width: 12px;
+			height: 12px;
+			border-radius: 3px;
 			background: var(--edge-subtle);
-			outline: none;
-			cursor: pointer;
+			border: 1px solid var(--edge);
 		}
 
-		input[type="range"]::-webkit-slider-thumb {
-			-webkit-appearance: none;
-			appearance: none;
-			width: 14px;
-			height: 14px;
-			border-radius: 50%;
-			background: var(--accent);
-			border: 2px solid var(--surface-card);
-			cursor: pointer;
-			box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 50%, transparent);
-			transition: transform .16s var(--ease-out);
-		}
-
-		input[type="range"]::-webkit-slider-thumb:hover {
-			transform: scale(1.1);
-		}
-
-		input[type="range"]::-moz-range-thumb {
-			width: 14px;
-			height: 14px;
-			border-radius: 50%;
-			background: var(--accent);
-			border: 2px solid var(--surface-card);
-			cursor: pointer;
+		.metric-foco.on {
+			background: var(--warm);
+			border-color: color-mix(in srgb, var(--warm) 70%, transparent);
+			box-shadow: 0 0 6px color-mix(in srgb, var(--warm) 50%, transparent);
 		}
 
 		.room-dim {
@@ -568,11 +468,6 @@ import "@fontsource/geist-mono/500.css";
 			</div>
 
 			<div class="section">
-				<div class="section-label">Focos</div>
-				<div class="foco-list" id="foco-list"></div>
-			</div>
-
-			<div class="section">
 				<div class="section-label">Acciones</div>
 				<div class="actions">
 					<button class="btn btn-on" id="btn-all-on">Encender todos</button>
@@ -581,13 +476,17 @@ import "@fontsource/geist-mono/500.css";
 			</div>
 
 			<div class="section">
-				<div class="section-label">Parámetros</div>
-				<div class="radius-group">
-					<div class="radius-row">
-						<span class="mono-label">Radio efectivo</span>
-						<span class="radius-value" id="radius-value">2 m</span>
-					</div>
-					<input type="range" id="radius" min="0.5" max="4" step="0.1" value="2" />
+				<div class="section-label">Optimización</div>
+				<div class="actions">
+					<button class="btn btn-opt" id="btn-local-search">Búsqueda local</button>
+					<button class="btn btn-opt" id="btn-genetic">Algoritmo genético</button>
+				</div>
+			</div>
+
+			<div class="section">
+				<div class="section-label">Resultados</div>
+				<div class="metrics" id="metrics">
+					<div class="metric-empty">Presiona un algoritmo para optimizar</div>
 				</div>
 			</div>
 		</aside>
@@ -625,7 +524,6 @@ import "@fontsource/geist-mono/500.css";
 		const room = document.getElementById("room");
 		const illumLayer = document.getElementById("illum");
 		const dimLayer = document.getElementById("dim");
-		const focoList = document.getElementById("foco-list");
 
 		const WIDTH_M = 8;
 		const HEIGHT_M = 7;
@@ -683,55 +581,8 @@ import "@fontsource/geist-mono/500.css";
 			markers.push(marker);
 		});
 
-		function buildMenu() {
-			focoList.innerHTML = "";
-			state.focos.forEach((f, i) => {
-				const row = document.createElement("label");
-				row.className = "foco-row";
-
-				const name = document.createElement("div");
-				name.className = "foco-name";
-				const id = document.createElement("span");
-				id.className = "id";
-				id.textContent = "0" + (i + 1);
-				const text = document.createElement("span");
-				text.textContent = "Foco " + (i + 1);
-				name.appendChild(id);
-				name.appendChild(text);
-
-				const status = document.createElement("span");
-				status.className = "foco-status";
-				status.textContent = "Apagado";
-
-				const sw = document.createElement("div");
-				sw.className = "switch";
-				const input = document.createElement("input");
-				input.type = "checkbox";
-				const slider = document.createElement("span");
-				slider.className = "slider";
-				sw.appendChild(input);
-				sw.appendChild(slider);
-
-				input.addEventListener("change", () => {
-					f.on = input.checked;
-					update();
-				});
-
-				row.appendChild(name);
-				row.appendChild(status);
-				row.appendChild(sw);
-				focoList.appendChild(row);
-			});
-		}
-
 		function update() {
-			const rows = focoList.querySelectorAll(".foco-row");
 			state.focos.forEach((f, i) => {
-				rows[i].classList.toggle("on", f.on);
-				const cb = rows[i].querySelector("input");
-				if (cb.checked !== f.on) cb.checked = f.on;
-				const st = rows[i].querySelector(".foco-status");
-				st.textContent = f.on ? "Encendido" : "Apagado";
 				markers[i].classList.toggle("on", f.on);
 			});
 
@@ -753,14 +604,6 @@ import "@fontsource/geist-mono/500.css";
 				: "transparent";
 		}
 
-		const radiusInput = document.getElementById("radius");
-		const radiusValue = document.getElementById("radius-value");
-		radiusInput.addEventListener("input", () => {
-			state.radius = parseFloat(radiusInput.value);
-			radiusValue.textContent = state.radius.toFixed(1) + " m";
-			update();
-		});
-
 		document.getElementById("btn-all-on").addEventListener("click", () => {
 			state.focos.forEach((f) => (f.on = true));
 			update();
@@ -771,7 +614,110 @@ import "@fontsource/geist-mono/500.css";
 			update();
 		});
 
-		buildMenu();
+		/* ---------- Optimización (backend) ---------- */
+
+		const BACKEND_URL = "http://localhost:8000";
+		const metricsPanel = document.getElementById("metrics");
+		const btnLocalSearch = document.getElementById("btn-local-search");
+		const btnGenetic = document.getElementById("btn-genetic");
+
+		function renderMetrics(data) {
+			const focos = data.focos;
+			const rows = [
+				{ label: "Focos", render: () => {
+					const wrap = document.createElement("div");
+					wrap.className = "metric-focos";
+					focos.forEach((on, i) => {
+						const dot = document.createElement("span");
+						dot.className = "metric-foco" + (on ? " on" : "");
+						wrap.appendChild(dot);
+					});
+					return wrap;
+				}},
+				{ label: "Focos encendidos", value: data.focos_encendidos + " / " + focos.length },
+				{ label: "Iluminación", value: data.iluminacion.toFixed(4) },
+				{ label: "Uniformidad", value: (data.uniformidad * 100).toFixed(1) + "%" },
+				{ label: "Potencia", value: data.potencia_w + " W" },
+				{ label: "Tiempo", value: data.tiempo_h + " h" },
+				{ label: "Energía", value: data.energia_kwh.toFixed(4) + " kWh" },
+				{ label: "Costo", value: "$ " + data.costo.toFixed(4) },
+			];
+
+			metricsPanel.innerHTML = "";
+			rows.forEach((r) => {
+				const metric = document.createElement("div");
+				metric.className = "metric";
+
+				const label = document.createElement("span");
+				label.className = "metric-label";
+				label.textContent = r.label;
+
+				const value = document.createElement("span");
+				value.className = "metric-value";
+				if (r.render) {
+					value.appendChild(r.render());
+				} else {
+					value.textContent = r.value;
+				}
+
+				metric.appendChild(label);
+				metric.appendChild(value);
+				metricsPanel.appendChild(metric);
+			});
+		}
+
+		function applySolution(data) {
+			data.focos.forEach((on, i) => {
+				state.focos[i].on = on === 1;
+			});
+			update();
+			renderMetrics(data);
+		}
+
+		function showError(message) {
+			metricsPanel.innerHTML = "";
+			const empty = document.createElement("div");
+			empty.className = "metric-empty";
+			empty.textContent = message;
+			metricsPanel.appendChild(empty);
+		}
+
+		function setLoading(button, loading) {
+			button.disabled = loading;
+		}
+
+		btnLocalSearch.addEventListener("click", async () => {
+			setLoading(btnLocalSearch, true);
+			try {
+				const res = await fetch(BACKEND_URL + "/api/local-search");
+				if (!res.ok) throw new Error("Error en la petición");
+				const data = await res.json();
+				applySolution(data);
+			} catch (e) {
+				showError("No se pudo conectar con el backend");
+			} finally {
+				setLoading(btnLocalSearch, false);
+			}
+		});
+
+		btnGenetic.addEventListener("click", async () => {
+			setLoading(btnGenetic, true);
+			try {
+				const res = await fetch(BACKEND_URL + "/api/genetic");
+				if (!res.ok) throw new Error("Error en la petición");
+				const data = await res.json();
+				if (data.pendiente) {
+					showError(data.message);
+				} else {
+					applySolution(data);
+				}
+			} catch (e) {
+				showError("No se pudo conectar con el backend");
+			} finally {
+				setLoading(btnGenetic, false);
+			}
+		});
+
 		update();
 	</script>
 </body>

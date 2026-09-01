@@ -90,3 +90,44 @@ class Room:
         lightbulbs_on: int = numpy.sum(individual)
 
         return lightbulbs_on * self.cost_per_lightbulb
+
+    def metrics(self, individual: NDArray) -> dict[str, float]:
+        avg_lighting: float = 0.0
+        min_lighting: float = self.points[0][0]
+
+        for i in range(POINTS_COUNT):
+            lighting_at_point: float = 0.0
+
+            for j in range(LIGHTBULBS.shape[0]):
+                if individual[j] == 0:
+                    continue
+
+                lighting_at_point += self.points[i][j]
+
+            min_lighting = min(min_lighting, lighting_at_point)
+
+            lighting_at_point = min(lighting_at_point, 1.0)
+
+            avg_lighting += lighting_at_point
+
+        avg_lighting /= POINTS_COUNT
+
+        lighting: float = avg_lighting - self.uniform_weight * (
+            avg_lighting - min_lighting
+        )
+
+        uniformity: float
+        if avg_lighting > 0:
+            uniformity = min_lighting / avg_lighting
+        else:
+            uniformity = 0.0
+
+        return {
+            "avg_lighting": avg_lighting,
+            "min_lighting": min_lighting,
+            "lighting": lighting,
+            "uniformity": uniformity,
+            "cost": self.cost(individual),
+            "consumed_energy": self.consumed_energy,
+            "cost_per_lightbulb": self.cost_per_lightbulb,
+        }
