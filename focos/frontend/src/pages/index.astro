@@ -301,6 +301,75 @@ import "@fontsource/geist-mono/500.css";
 			position: relative;
 		}
 
+		.front-grid {
+			display: none;
+			flex-wrap: wrap;
+			justify-content: center;
+			align-items: center;
+			gap: 20px;
+			max-width: 800px;
+		}
+
+		.front-grid.active {
+			display: flex;
+		}
+
+		.front-card {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 10px;
+			padding: 14px;
+			background: var(--surface-card);
+			border: 1px solid var(--edge);
+			border-radius: 10px;
+			cursor: pointer;
+			transition: border-color .16s var(--ease-out), transform .1s var(--ease-out);
+		}
+
+		.front-card:hover {
+			border-color: color-mix(in srgb, var(--warm) 60%, var(--edge));
+			transform: translateY(-2px);
+		}
+
+		.front-card.mini {
+			position: relative;
+			width: 160px;
+			height: 140px;
+			background: var(--surface-raised);
+			border: 1px solid var(--edge);
+			border-radius: 8px;
+			overflow: hidden;
+		}
+
+		.front-card.mini .mini-foco {
+			position: absolute;
+			transform: translate(-50%, -50%);
+			width: 14px;
+			height: 14px;
+			border-radius: 50%;
+			background: var(--edge-subtle);
+			border: 1px solid var(--edge);
+		}
+
+		.front-card.mini .mini-foco.on {
+			background: var(--warm);
+			border-color: color-mix(in srgb, var(--warm) 70%, transparent);
+			box-shadow: 0 0 8px color-mix(in srgb, var(--warm) 60%, transparent);
+		}
+
+		.front-card .front-meta {
+			font-family: "Geist Mono", ui-monospace, monospace;
+			font-size: 10px;
+			color: var(--secondary);
+			text-align: center;
+		}
+
+		.front-card.selected {
+			border-color: var(--warm);
+			box-shadow: 0 0 0 1px var(--warm);
+		}
+
 		.room-wrap {
 			position: relative;
 			width: 720px;
@@ -492,7 +561,8 @@ import "@fontsource/geist-mono/500.css";
 		</aside>
 
 		<main class="stage">
-			<div class="room-wrap">
+			<div class="front-grid" id="front-grid"></div>
+			<div class="room-wrap" id="room-wrap">
 				<div class="dimension dim-w">8 m</div>
 				<div class="dimension dim-h">7 m</div>
 				<div class="room" id="room">
@@ -605,11 +675,13 @@ import "@fontsource/geist-mono/500.css";
 		}
 
 		document.getElementById("btn-all-on").addEventListener("click", () => {
+			showRoomView();
 			state.focos.forEach((f) => (f.on = true));
 			update();
 		});
 
 		document.getElementById("btn-all-off").addEventListener("click", () => {
+			showRoomView();
 			state.focos.forEach((f) => (f.on = false));
 			update();
 		});
@@ -621,8 +693,13 @@ import "@fontsource/geist-mono/500.css";
 		const btnLocalSearch = document.getElementById("btn-local-search");
 		const btnGenetic = document.getElementById("btn-genetic");
 
-		function renderMetrics(data) {
+		function renderMetrics(data, meta = {}) {
 			const focos = data.focos;
+			const potenciaW = data.potencia_w ?? meta.potencia_w ?? 15;
+			const tiempoH = data.tiempo_h ?? meta.tiempo_h ?? 5;
+			const energiaKwh = data.energia_kwh ?? meta.energia_kwh ?? null;
+			const costoPorFoco = data.costo_por_foco ?? null;
+
 			const rows = [
 				{ label: "Focos", render: () => {
 					const wrap = document.createElement("div");
@@ -637,11 +714,19 @@ import "@fontsource/geist-mono/500.css";
 				{ label: "Focos encendidos", value: data.focos_encendidos + " / " + focos.length },
 				{ label: "Iluminación", value: data.iluminacion.toFixed(4) },
 				{ label: "Uniformidad", value: (data.uniformidad * 100).toFixed(1) + "%" },
-				{ label: "Potencia", value: data.potencia_w + " W" },
-				{ label: "Tiempo", value: data.tiempo_h + " h" },
-				{ label: "Energía", value: data.energia_kwh.toFixed(4) + " kWh" },
-				{ label: "Costo", value: "$ " + data.costo.toFixed(4) },
+				{ label: "Potencia", value: potenciaW + " W" },
+				{ label: "Tiempo", value: tiempoH + " h" },
 			];
+
+			if (energiaKwh !== null) {
+				rows.push({ label: "Energía", value: energiaKwh.toFixed(4) + " kWh" });
+			}
+
+			rows.push({ label: "Costo", value: "$ " + data.costo.toFixed(4) });
+
+			if (costoPorFoco !== null) {
+				rows.push({ label: "Costo por foco", value: "$ " + costoPorFoco.toFixed(4) });
+			}
 
 			metricsPanel.innerHTML = "";
 			rows.forEach((r) => {
@@ -666,12 +751,72 @@ import "@fontsource/geist-mono/500.css";
 			});
 		}
 
-		function applySolution(data) {
+		function applySolution(data, meta = {}) {
+			showRoomView();
 			data.focos.forEach((on, i) => {
 				state.focos[i].on = on === 1;
 			});
 			update();
-			renderMetrics(data);
+			renderMetrics(data, meta);
+		}
+
+		const frontGrid = document.getElementById("front-grid");
+		const roomWrap = document.getElementById("room-wrap");
+
+		function showRoomView() {
+			frontGrid.classList.remove("active");
+			roomWrap.style.display = "";
+		}
+
+		function showFrontGrid() {
+			frontGrid.classList.add("active");
+			roomWrap.style.display = "none";
+		}
+
+		function buildThumbnail(sol, meta, isSelected) {
+			const card = document.createElement("div");
+			card.className = "front-card";
+
+			const mini = document.createElement("div");
+			mini.className = "front-card mini";
+
+			FOCO_POSITIONS.forEach((pos, i) => {
+				const dot = document.createElement("div");
+				dot.className = "mini-foco" + (sol.focos[i] === 1 ? " on" : "");
+				dot.style.left = (pos.x * 20) + "px";
+				dot.style.top = (pos.y * 20) + "px";
+				mini.appendChild(dot);
+			});
+			card.appendChild(mini);
+
+			const metaDiv = document.createElement("div");
+			metaDiv.className = "front-meta";
+			metaDiv.innerHTML =
+				sol.focos_encendidos + " focos · ilum " + sol.iluminacion.toFixed(3) +
+				" · $ " + sol.costo.toFixed(3);
+			card.appendChild(metaDiv);
+
+			if (isSelected) card.classList.add("selected");
+
+			card.addEventListener("click", () => {
+				showRoomView();
+				applySolution(sol, meta);
+			});
+
+			return card;
+		}
+
+		function renderFrontGrid(data) {
+			frontGrid.innerHTML = "";
+			const meta = {
+				potencia_w: data.potencia_w,
+				tiempo_h: data.tiempo_h,
+			};
+			data.frente.forEach((sol, i) => {
+				frontGrid.appendChild(
+					buildThumbnail(sol, meta, i === 0)
+				);
+			});
 		}
 
 		function showError(message) {
@@ -706,11 +851,13 @@ import "@fontsource/geist-mono/500.css";
 				const res = await fetch(BACKEND_URL + "/api/genetic");
 				if (!res.ok) throw new Error("Error en la petición");
 				const data = await res.json();
-				if (data.pendiente) {
-					showError(data.message);
-				} else {
-					applySolution(data);
-				}
+				showFrontGrid();
+				renderFrontGrid(data);
+				metricsPanel.innerHTML = "";
+				const hint = document.createElement("div");
+				hint.className = "metric-empty";
+				hint.textContent = "Selecciona una solución del frente";
+				metricsPanel.appendChild(hint);
 			} catch (e) {
 				showError("No se pudo conectar con el backend");
 			} finally {

@@ -2,6 +2,7 @@ import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 
+from algorithms.genetic import GeneticAlgorithm
 from algorithms.local_search import LocalSearch
 
 HOST = "localhost"
@@ -24,9 +25,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         elif path == "/api/local-search":
             self.send_json(LocalSearch().solve())
         elif path == "/api/genetic":
-            self.send_json(
-                {"pendiente": True, "message": "El algoritmo genético está pendiente de validación con el profesor"}
-            )
+            self.send_json(GeneticAlgorithm().solve())
         else:
             self.send_json({"error": "Ruta no encontrada"}, status=404)
 

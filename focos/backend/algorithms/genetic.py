@@ -12,6 +12,8 @@ MAX_EPOCHS = 100
 
 PATIENCE = 10
 
+MAX_FRONT_SOLUTIONS = 6
+
 
 class GeneticAlgorithm:
     population: NDArray
@@ -36,6 +38,14 @@ class GeneticAlgorithm:
     room: Room
 
     def run(self):
+        self.evolve(verbose=True)
+
+    def solve(self) -> dict:
+        self.evolve(verbose=False)
+
+        return self.result_dict()
+
+    def evolve(self, verbose: bool = True) -> None:
         self.rng = numpy.random.default_rng()
 
         self.population = numpy.zeros((POPULATION_SIZE, 6), dtype=numpy.byte)
@@ -65,7 +75,8 @@ class GeneticAlgorithm:
         self.previous_front = self.pareto_front(ranking)
         self.best_front = self.previous_front.copy()
 
-        print(f"Frente Pareto inicial (época {self.epoch}): {self.previous_front}")
+        if verbose:
+            print(f"Frente Pareto inicial (época {self.epoch}): {self.previous_front}")
 
         # 2-6. Evolution loop
 
@@ -107,13 +118,15 @@ class GeneticAlgorithm:
 
             self.check_improvement()
 
-            print(
-                f"Época {self.epoch} finalizada - paciencia: "
-                f"{self.patience_without_improvement}"
-            )
+            if verbose:
+                print(
+                    f"Época {self.epoch} finalizada - paciencia: "
+                    f"{self.patience_without_improvement}"
+                )
 
-        print(f"Algoritmo detenido en época {self.epoch}")
-        print(f"Mejor frente Pareto encontrado: {self.best_front}")
+        if verbose:
+            print(f"Algoritmo detenido en época {self.epoch}")
+            print(f"Mejor frente Pareto encontrado: {self.best_front}")
 
     def compute_probabilities(self, ranking: NDArray) -> NDArray:
         total_ranking: float = 0.0
@@ -304,3 +317,51 @@ class GeneticAlgorithm:
             current_rank += 1
 
         return rank
+
+    def result_dict(self) -> dict:
+        ranking: NDArray = self.pareto_ranking(self.objetives)
+        front_indices: NDArray = numpy.where(ranking == 1)[0]
+
+        solutions: list[dict] = []
+
+        seen: set[str] = set()
+
+        for index in front_indices:
+            individual: NDArray = self.population[index]
+
+            key: str = "".join(str(int(v)) for v in individual)
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+
+            metrics: dict[str, float] = self.room.metrics(individual)
+
+            solutions.append(
+                {
+                    "focos": [int(value) for value in individual],
+                    "iluminacion": float(metrics["lighting"]),
+                    "iluminacion_promedio": float(metrics["avg_lighting"]),
+                    "iluminacion_minima": float(metrics["min_lighting"]),
+                    "uniformidad": float(metrics["uniformity"]),
+                    "costo": float(metrics["cost"]),
+                    "focos_encendidos": int(numpy.sum(individual)),
+                }
+            )
+
+        if len(solutions) > MAX_FRONT_SOLUTIONS:
+            indices: NDArray = self.rng.choice(
+                numpy.arange(len(solutions)),
+                size=MAX_FRONT_SOLUTIONS,
+                replace=False,
+            )
+
+            solutions = [solutions[i] for i in indices]
+
+        return {
+            "frente": solutions,
+            "total_soluciones": len(solutions),
+            "potencia_w": 15.0,
+            "tiempo_h": 5.0,
+        }
