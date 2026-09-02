@@ -271,6 +271,59 @@ import "@fontsource/geist-mono/500.css";
 			align-items: center;
 		}
 
+		.bench-title {
+			font-family: "Geist Mono", ui-monospace, monospace;
+			font-size: 11px;
+			color: var(--primary);
+			padding: 2px 0;
+			margin-bottom: 2px;
+		}
+
+		.bench-row {
+			margin-bottom: 10px;
+		}
+
+		.bench-name {
+			font-family: "Geist Mono", ui-monospace, monospace;
+			font-size: 10px;
+			color: var(--secondary);
+			margin-bottom: 4px;
+		}
+
+		.bench-bar {
+			height: 10px;
+			border-radius: 5px;
+			background: var(--edge-subtle);
+			overflow: hidden;
+		}
+
+		.bench-bar-fill {
+			height: 100%;
+			background: var(--warm);
+			border-radius: 5px;
+			transition: width .3s var(--ease-out);
+		}
+
+		.bench-figures {
+			display: flex;
+			justify-content: space-between;
+			font-family: "Geist Mono", ui-monospace, monospace;
+			font-size: 11px;
+			color: var(--muted);
+			margin-top: 3px;
+		}
+
+		.bench-foot {
+			font-family: "Geist Mono", ui-monospace, monospace;
+			font-size: 11px;
+			color: var(--muted);
+			margin-top: 12px;
+			padding: 10px;
+			border: 1px dashed var(--edge);
+			border-radius: 8px;
+			line-height: 1.6;
+		}
+
 		.metric-foco {
 			width: 12px;
 			height: 12px;
@@ -368,6 +421,19 @@ import "@fontsource/geist-mono/500.css";
 		.front-card.selected {
 			border-color: var(--warm);
 			box-shadow: 0 0 0 1px var(--warm);
+		}
+
+		.front-card .front-badge {
+			display: inline-block;
+			font-family: "Geist Mono", ui-monospace, monospace;
+			font-size: 10px;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			padding: 3px 8px;
+			border-radius: 999px;
+			background: color-mix(in srgb, var(--warm) 18%, transparent);
+			color: var(--warm);
+			border: 1px solid color-mix(in srgb, var(--warm) 45%, transparent);
 		}
 
 		.room-wrap {
@@ -549,6 +615,8 @@ import "@fontsource/geist-mono/500.css";
 				<div class="actions">
 					<button class="btn btn-opt" id="btn-local-search">Búsqueda local</button>
 					<button class="btn btn-opt" id="btn-genetic">Algoritmo genético</button>
+					<button class="btn btn-opt" id="btn-genetic-elite">GA con elitismo</button>
+					<button class="btn btn-opt" id="btn-benchmark">Benchmark (3 algoritmos)</button>
 				</div>
 			</div>
 
@@ -692,6 +760,8 @@ import "@fontsource/geist-mono/500.css";
 		const metricsPanel = document.getElementById("metrics");
 		const btnLocalSearch = document.getElementById("btn-local-search");
 		const btnGenetic = document.getElementById("btn-genetic");
+		const btnGeneticElite = document.getElementById("btn-genetic-elite");
+		const btnBenchmark = document.getElementById("btn-benchmark");
 
 		function renderMetrics(data, meta = {}) {
 			const focos = data.focos;
@@ -773,7 +843,7 @@ import "@fontsource/geist-mono/500.css";
 			roomWrap.style.display = "none";
 		}
 
-		function buildThumbnail(sol, meta, isSelected) {
+		function buildThumbnail(sol, meta, isSelected, badge) {
 			const card = document.createElement("div");
 			card.className = "front-card";
 
@@ -788,6 +858,13 @@ import "@fontsource/geist-mono/500.css";
 				mini.appendChild(dot);
 			});
 			card.appendChild(mini);
+
+			if (badge) {
+				const badgeEl = document.createElement("div");
+				badgeEl.className = "front-badge";
+				badgeEl.textContent = badge;
+				card.appendChild(badgeEl);
+			}
 
 			const metaDiv = document.createElement("div");
 			metaDiv.className = "front-meta";
@@ -812,9 +889,21 @@ import "@fontsource/geist-mono/500.css";
 				potencia_w: data.potencia_w,
 				tiempo_h: data.tiempo_h,
 			};
-			data.frente.forEach((sol, i) => {
+
+			const recommended = data.mejor_escalarizacion
+				? data.mejor_escalarizacion.focos.join(",")
+				: null;
+
+			if (data.mejor_escalarizacion) {
 				frontGrid.appendChild(
-					buildThumbnail(sol, meta, i === 0)
+					buildThumbnail(data.mejor_escalarizacion, meta, true, "Recomendada")
+				);
+			}
+
+			data.frente.forEach((sol) => {
+				if (recommended && sol.focos.join(",") === recommended) return;
+				frontGrid.appendChild(
+					buildThumbnail(sol, meta, false)
 				);
 			});
 		}
@@ -845,23 +934,125 @@ import "@fontsource/geist-mono/500.css";
 			}
 		});
 
-		btnGenetic.addEventListener("click", async () => {
-			setLoading(btnGenetic, true);
+		function runGenetic(button, endpoint, hintText) {
+			return async () => {
+				setLoading(button, true);
+				try {
+					const res = await fetch(BACKEND_URL + endpoint);
+					if (!res.ok) throw new Error("Error en la petición");
+					const data = await res.json();
+					showFrontGrid();
+					renderFrontGrid(data);
+					metricsPanel.innerHTML = "";
+					const hint = document.createElement("div");
+					hint.className = "metric-empty";
+					hint.textContent = hintText;
+					metricsPanel.appendChild(hint);
+				} catch (e) {
+					showError("No se pudo conectar con el backend");
+				} finally {
+					setLoading(button, false);
+				}
+			};
+		}
+
+		btnGenetic.addEventListener(
+			"click",
+			runGenetic(
+				btnGenetic,
+				"/api/genetic",
+				"GA puramente estocástico: usa la sol. Recomendada o elige otra del frente"
+			)
+		);
+
+		btnGeneticElite.addEventListener(
+			"click",
+			runGenetic(
+				btnGeneticElite,
+				"/api/genetic-elite",
+				"GA con elitismo: conserva la mejor solución. Usa la Recomendada o elige otra del frente"
+			)
+		);
+
+		function renderBenchmark(data) {
+			showRoomView();
+			metricsPanel.innerHTML = "";
+
+			const title = document.createElement("div");
+			title.className = "bench-title";
+			title.textContent =
+				"Acierto del óptimo global [" +
+				data.optimo_global.join(",") +
+				"] en " +
+				data.corridas +
+				" corridas por algoritmo";
+			metricsPanel.appendChild(title);
+
+			const algos = data.algoritmos;
+
+			const lsBar = buildBenchRow(
+				algos.busqueda_local.nombre,
+				algos.busqueda_local.encontro_optimo,
+				algos.busqueda_local.porcentaje,
+				data.corridas
+			);
+			metricsPanel.appendChild(lsBar);
+
+			const gaBar = buildBenchRow(
+				algos.ga_puro.nombre,
+				algos.ga_puro.encontro_optimo_recomendada,
+				algos.ga_puro.recomendada_porcentaje,
+				data.corridas
+			);
+			metricsPanel.appendChild(gaBar);
+
+			const eliteBar = buildBenchRow(
+				algos.ga_elitista.nombre,
+				algos.ga_elitista.encontro_optimo_recomendada,
+				algos.ga_elitista.recomendada_porcentaje,
+				data.corridas
+			);
+			metricsPanel.appendChild(eliteBar);
+		}
+
+		function buildBenchRow(name, hits, percent, runs) {
+			const row = document.createElement("div");
+			row.className = "bench-row";
+
+			const nameEl = document.createElement("div");
+			nameEl.className = "bench-name";
+			nameEl.textContent = name;
+			row.appendChild(nameEl);
+
+			const bar = document.createElement("div");
+			bar.className = "bench-bar";
+
+			const fill = document.createElement("div");
+			fill.className = "bench-bar-fill";
+			fill.style.width = percent + "%";
+			bar.appendChild(fill);
+			row.appendChild(bar);
+
+			const figs = document.createElement("div");
+			figs.className = "bench-figures";
+			figs.innerHTML =
+				"<span>" + hits + "/" + runs + " corridas</span><span>" + percent + "%</span>";
+			row.appendChild(figs);
+
+			return row;
+		}
+
+		btnBenchmark.addEventListener("click", async () => {
+			setLoading(btnBenchmark, true);
 			try {
-				const res = await fetch(BACKEND_URL + "/api/genetic");
+				const res = await fetch(BACKEND_URL + "/api/benchmark");
 				if (!res.ok) throw new Error("Error en la petición");
 				const data = await res.json();
-				showFrontGrid();
-				renderFrontGrid(data);
-				metricsPanel.innerHTML = "";
-				const hint = document.createElement("div");
-				hint.className = "metric-empty";
-				hint.textContent = "Selecciona una solución del frente";
-				metricsPanel.appendChild(hint);
+				renderBenchmark(data);
 			} catch (e) {
 				showError("No se pudo conectar con el backend");
 			} finally {
-				setLoading(btnGenetic, false);
+				setLoading(btnBenchmark, false);
 			}
 		});
 

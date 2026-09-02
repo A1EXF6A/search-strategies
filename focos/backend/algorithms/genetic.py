@@ -10,9 +10,11 @@ MUTATION_PROBABILITY = 0.3
 
 MAX_EPOCHS = 100
 
-PATIENCE = 10
+PATIENCE = 32
 
 MAX_FRONT_SOLUTIONS = 6
+
+SURVIVAL_FITNESS_WEIGHT_COST = 10
 
 
 class GeneticAlgorithm:
@@ -32,10 +34,14 @@ class GeneticAlgorithm:
     patience_without_improvement: int
     previous_front: NDArray
     best_front: NDArray
+    stop_reason: str
 
     rng: numpy.random.Generator
 
     room: Room
+
+    def __init__(self, elitism: bool = False) -> None:
+        self.elitism = elitism
 
     def run(self):
         self.evolve(verbose=True)
@@ -83,6 +89,14 @@ class GeneticAlgorithm:
         while not self.stopping_condition():
             self.epoch += 1
 
+            # Elitism: keep a copy of the most fit individual of the current
+            # generation so it cannot be lost by crossover/mutation/replacement.
+
+            elite: NDArray | None = None
+
+            if self.elitism:
+                elite = self.population[self.best_scalarized_index()].copy()
+
             # 2. Select parents based on Pareto ranking
 
             ranking = self.pareto_ranking(self.objetives)
@@ -109,7 +123,14 @@ class GeneticAlgorithm:
 
             self.replacement()
 
-            # 5.1 Re-evaluate fitness of the new population
+            # 5.1 Elitism: reinsert the preserved elite, replacing a random
+            #     individual, so the best solution always survives.
+
+            if self.elitism and elite is not None:
+                victim: int = int(self.rng.integers(0, self.population.shape[0]))
+                self.population[victim] = elite
+
+            # 5.2 Re-evaluate fitness of the new population
 
             self.evaluate_fitness()
 
@@ -124,9 +145,8 @@ class GeneticAlgorithm:
                     f"{self.patience_without_improvement}"
                 )
 
-        if verbose:
-            print(f"Algoritmo detenido en época {self.epoch}")
-            print(f"Mejor frente Pareto encontrado: {self.best_front}")
+        print(f"Algoritmo detenido en época {self.epoch}: {self.stop_reason}")
+        print(f"Mejor frente Pareto encontrado: {self.best_front}")
 
     def compute_probabilities(self, ranking: NDArray) -> NDArray:
         total_ranking: float = 0.0
@@ -268,10 +288,15 @@ class GeneticAlgorithm:
         )
 
     def stopping_condition(self) -> bool:
-        if self.epoch >= MAX_EPOCHS:
+        if self.patience_without_improvement >= PATIENCE:
+            self.stop_reason = "Paciencia agotada"
             return True
 
-        return self.patience_without_improvement >= PATIENCE
+        if self.epoch >= MAX_EPOCHS:
+            self.stop_reason = "Épocas agotadas"
+            return True
+
+        return False
 
     def set_initial_population(self):
         for i in range(POPULATION_SIZE):
@@ -359,9 +384,46 @@ class GeneticAlgorithm:
 
             solutions = [solutions[i] for i in indices]
 
+        best_scalarized_index: int = self.best_scalarized_index()
+
+        best_scalarized_metrics: dict[str, float] = self.room.metrics(
+            self.population[best_scalarized_index]
+        )
+
         return {
             "frente": solutions,
             "total_soluciones": len(solutions),
+            "mejor_escalarizacion": {
+                "focos": [int(value) for value in self.population[best_scalarized_index]],
+                "focos_encendidos": int(
+                    numpy.sum(self.population[best_scalarized_index])
+                ),
+                "iluminacion": float(best_scalarized_metrics["lighting"]),
+                "iluminacion_promedio": float(
+                    best_scalarized_metrics["avg_lighting"]
+                ),
+                "iluminacion_minima": float(
+                    best_scalarized_metrics["min_lighting"]
+                ),
+                "uniformidad": float(best_scalarized_metrics["uniformity"]),
+                "costo": float(best_scalarized_metrics["cost"]),
+            },
             "potencia_w": 15.0,
             "tiempo_h": 5.0,
         }
+
+    def best_scalarized_index(self) -> int:
+        best_index: int = 0
+        best_value: float = -numpy.inf
+
+        for i in range(self.population.shape[0]):
+            lighting: float = self.room.lighting(self.population[i])
+            cost: float = self.room.cost(self.population[i])
+
+            value: float = lighting - SURVIVAL_FITNESS_WEIGHT_COST * cost
+
+            if value > best_value:
+                best_value = value
+                best_index = i
+
+        return best_index

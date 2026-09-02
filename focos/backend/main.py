@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 
 from algorithms.genetic import GeneticAlgorithm
 from algorithms.local_search import LocalSearch
+from benchmark import run_benchmark
 
 HOST = "localhost"
 PORT = 8000
@@ -26,6 +27,10 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.send_json(LocalSearch().solve())
         elif path == "/api/genetic":
             self.send_json(GeneticAlgorithm().solve())
+        elif path == "/api/genetic-elite":
+            self.send_json(GeneticAlgorithm(elitism=True).solve())
+        elif path == "/api/benchmark":
+            self.send_json(run_benchmark())
         else:
             self.send_json({"error": "Ruta no encontrada"}, status=404)
 
