@@ -1,180 +1,287 @@
-from collections import Counter
+from collections.abc import Iterable
+from pathlib import Path
+from typing import cast
 
 import pandas as pd
+from structures.rule import Condition, PrismRule
 
-RUTA_DATOS = "dataset_prism_proyectos_software.csv"
-COLUMNA_ID = "Proyecto_ID"
-COLUMNA_CLASE = "Exito_Proyecto"
+CLASS_COLUMN: str = "Exito_Proyecto"
 
-df = pd.read_csv(RUTA_DATOS)
-if COLUMNA_ID in df.columns:
-    df = df.drop(columns=[COLUMNA_ID])
+ID_COLUMN: str = "Proyecto_ID"
 
-atributos = [c for c in df.columns if c != COLUMNA_CLASE]
-print(f"Filas: {len(df)} | Atributos: {atributos} | Clase: {COLUMNA_CLASE}")
-print(f"Distribución de clase:\n{df[COLUMNA_CLASE].value_counts()}\n")
+MIN_CONFIDENCE: float = 0.85
+
+RESET: str = "\033[0m"
+GREEN: str = "\033[92m"
+YELLOW: str = "\033[93m"
+RED: str = "\033[91m"
+BLUE: str = "\033[94m"
 
 
-def prism(data: pd.DataFrame, atributos: list, clase: str, soporte_minimo: int = 5):
+def main() -> None:
+    path: Path = Path(__file__).parent / "dataset_prism_proyectos_software.csv"
 
-    reglas = []
-    valores_clase = data[clase].unique()
+    # Phase 1: Load the dataset and list the target class values
 
-    for valor_clase in valores_clase:
-        E = data.copy()
-        total_clase_original = (data[clase] == valor_clase).sum()
+    df: pd.DataFrame = load_csv(path)
 
-        while (E[clase] == valor_clase).sum() > 0:
-            condiciones = []
-            subconjunto = E.copy()
-            atributos_disponibles = list(atributos)
+    class_values: list[str] = sorted(
+        cast(list[str], df[CLASS_COLUMN].unique().tolist())
+    )
 
-            while True:
-                mejor_atributo = None
-                mejor_valor = None
-                mejor_p = -1
-                mejor_t = -1
-                mejor_score = -1.0
+    print(f"Clase objetivo: {CLASS_COLUMN} -> {class_values}")
+    print()
 
-                for atributo in atributos_disponibles:
-                    if atributo in [c[0] for c in condiciones]:
-                        continue
-                    for valor in subconjunto[atributo].unique():
-                        cubiertas = subconjunto[subconjunto[atributo] == valor]
-                        t = len(cubiertas)
-                        p = (cubiertas[clase] == valor_clase).sum()
-                        if t == 0:
-                            continue
-                        score = p / t
-                        if (score > mejor_score) or (
-                            score == mejor_score and p > mejor_p
-                        ):
-                            mejor_score = score
-                            mejor_p = p
-                            mejor_t = t
-                            mejor_atributo = atributo
-                            mejor_valor = valor
+    # Phase 2: Generate PRISM rules for each class value
 
-                if mejor_atributo is None:
-                    break
+    rules: list[PrismRule] = []
 
-                condiciones.append((mejor_atributo, mejor_valor))
-                subconjunto = subconjunto[subconjunto[mejor_atributo] == mejor_valor]
+    for class_value in class_values:
+        rules.extend(generate_rules_for_class(df, class_value))
 
-                if mejor_score == 1.0:
-                    break
-                if len(condiciones) == len(atributos):
-                    break
-                if mejor_t <= soporte_minimo:
-                    break
+    # print(f"{GREEN}Reglas PRISM generadas:{RESET}")
+    # print()
+    #
+    # for index, rule in enumerate(rules, 1):
+    #     marker: str = (
+    #         f"{RED} *{RESET}" if rule.confidence >= MIN_CONFIDENCE else ""
+    #     )
+    #
+    #     print(f"  {index}. {format_rule(rule)}{marker}")
+    #     print(
+    #         f"     > confianza={rule.confidence * 100:.1f}%  cobertura={rule.coverage:>3}"
+    #     )
+    #
+    # print()
+    # print(
+    #     f"{YELLOW}* reglas que cumplen la confianza mínima "
+    #     f"{MIN_CONFIDENCE:.0%}{RESET}"
+    # )
+    # print()
 
-            if not condiciones:
-                break
+    # Phase 3: Summarize the rules generated per class
 
-            mask = pd.Series(True, index=data.index)
-            for atributo, valor in condiciones:
-                mask &= data[atributo] == valor
-            cubiertas_total = data[mask]
-            t_total = len(cubiertas_total)
-            p_total = (cubiertas_total[clase] == valor_clase).sum()
-            precision = p_total / t_total if t_total else 0
-            cobertura = p_total / total_clase_original if total_clase_original else 0
+    print(f"{GREEN}Reglas definidas:{RESET}")
+    print()
 
-            reglas.append(
-                {
-                    "condiciones": condiciones,
-                    "clase": valor_clase,
-                    "precision": round(precision, 4),
-                    "soporte": t_total,
-                    "aciertos": p_total,
-                    "cobertura_clase": round(cobertura, 4),
-                }
+    for class_value in class_values:
+        count: int = sum(1 for rule in rules if rule.class_value == class_value)
+        print(f"  {CLASS_COLUMN} = {class_value}: {count} reglas")
+
+    print()
+
+    # Phase 4: Report the most relevant rules
+
+    report_best_rules(df, rules)
+
+
+def load_csv(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        raise FileNotFoundError(f"File {path} does not exist.")
+
+    df: pd.DataFrame = pd.read_csv(path, usecols=lambda c: c != ID_COLUMN)
+
+    print(f"Dataset: {path.name}")
+
+    return df
+
+
+def generate_rules_for_class(df: pd.DataFrame, class_value: str) -> list[PrismRule]:
+    remaining: pd.DataFrame = df
+    rules: list[PrismRule] = []
+    rule_index: int = 1
+
+    print(f"{BLUE}Clase objetivo: {class_value}{RESET}")
+    print()
+
+    # Phase A: Repeat while there are still uncovered examples of the class
+
+    while count_examples(remaining, class_value) > 0:
+        conditions: list[Condition] = []
+        working: pd.DataFrame = remaining
+
+        # print(f"  Construyendo regla {rule_index}")
+        # print()
+
+        # Phase B: Grow the rule adding the best condition at each step
+
+        while True:
+            choice: tuple[Condition, float, int] | None = best_condition(
+                working, class_value, conditions
             )
 
-            mask_E = pd.Series(True, index=E.index)
-            for atributo, valor in condiciones:
-                mask_E &= E[atributo] == valor
-            E = E[~mask_E]
-
-            if p_total == 0:
+            if choice is None:
                 break
 
-    return reglas
+            condition, confidence, total = choice
+
+            conditions.append(condition)
+
+            working = cast(pd.DataFrame, working[matches(working, conditions)])
+
+            # print(
+            #     f"    + {condition.column} = {condition.value}  "
+            #     f"confianza {confidence * 100:.1f}%  cobertura {total}"
+            # )
+
+            # Stop when every covered example belongs to the class
+
+            if bool(cast(pd.Series, working[CLASS_COLUMN]).eq(class_value).all()):
+                break
+
+        if not conditions:
+            break
+
+        # Phase C: Evaluate the finished rule over the whole dataset
+
+        coverage: int = count_matches(df, conditions)
+        positives: int = count_positives(df, conditions, class_value)
+        confidence_final: float = positives / coverage if coverage > 0 else 0.0
+
+        rules.append(
+            PrismRule(tuple(conditions), class_value, coverage, confidence_final)
+        )
+
+        # print(
+        #     f"    Regla final: {format_rule_conditions(conditions, class_value)}  "
+        #     f"cobertura {coverage}  confianza {confidence_final * 100:.1f}%"
+        # )
+        # print()
+
+        # Phase D: Remove the covered examples for the next rule to take over
+
+        remaining = cast(pd.DataFrame, remaining[~matches(remaining, conditions)])
+
+        rule_index += 1
+
+    return rules
 
 
-def formatear_regla(regla: dict) -> str:
-    condiciones_txt = " Y ".join(f"({a} = {v})" for a, v in regla["condiciones"])
-    return (
-        f"SI {condiciones_txt} ENTONCES {COLUMNA_CLASE} = {regla['clase']}  "
-        f"[precisión={regla['precision'] * 100:.1f}%, "
-        f"soporte={regla['soporte']}, aciertos={regla['aciertos']}, "
-        f"cobertura de la clase={regla['cobertura_clase'] * 100:.1f}%]"
-    )
-
-
-reglas = prism(df, atributos, COLUMNA_CLASE, soporte_minimo=5)
-
-reglas_ordenadas = sorted(
-    reglas, key=lambda r: (r["precision"], r["soporte"]), reverse=True
-)
-
-print("=" * 90)
-print("TODAS LAS REGLAS GENERADAS POR PRISM (ordenadas por precisión y soporte)")
-print("=" * 90)
-for i, r in enumerate(reglas_ordenadas, 1):
-    print(f"{i:2d}. {formatear_regla(r)}")
-
-total_filas = len(df)
-MIN_SOPORTE = 0.70
-MIN_CONFIANZA = 0.85
-
-mejores = [
-    r
-    for r in reglas_ordenadas
-    if r["precision"] >= MIN_CONFIANZA and (r["soporte"] / total_filas) >= MIN_SOPORTE
-]
-
-print("\n" + "=" * 90)
-print(
-    f"MEJORES REGLAS (soporte >= {MIN_SOPORTE} del total y confianza >= {MIN_CONFIANZA})"
-)
-print("=" * 90)
-if mejores:
-    for i, r in enumerate(mejores, 1):
-        print(f"{i:2d}. {formatear_regla(r)}")
-else:
-    max_soporte_relativo = max(r["soporte"] / total_filas for r in reglas_ordenadas)
-    print(
-        f"Ninguna regla alcanza un soporte >= {MIN_SOPORTE} sobre el total del "
-        f"dataset (el soporte relativo máximo observado es "
-        f"{max_soporte_relativo:.2f}, porque cada regla predice una sola "
-        f"clase y las clases ocupan ~50% del dataset cada una)."
-    )
-    print(
-        f"\nCon confianza >= {MIN_CONFIANZA} (sin exigir ese soporte), las "
-        f"mejores reglas son:"
-    )
-    mejores_por_confianza = [
-        r for r in reglas_ordenadas if r["precision"] >= MIN_CONFIANZA
+def report_best_rules(df: pd.DataFrame, rules: list[PrismRule]) -> None:
+    qualified: list[PrismRule] = [
+        rule for rule in rules if rule.confidence >= MIN_CONFIDENCE
     ]
-    for i, r in enumerate(mejores_por_confianza[:10], 1):
-        print(f"{i:2d}. {formatear_regla(r)}")
 
-filas_export = []
-for r in reglas_ordenadas:
-    condicion_txt = " AND ".join(f"{a}={v}" for a, v in r["condiciones"])
-    filas_export.append(
-        {
-            "regla_SI": condicion_txt,
-            "clase_ENTONCES": r["clase"],
-            "precision": r["precision"],
-            "soporte": r["soporte"],
-            "aciertos": r["aciertos"],
-            "cobertura_clase": r["cobertura_clase"],
-        }
+    print(f"{GREEN}Mejores reglas con confianza >= {MIN_CONFIDENCE:.0%}:{RESET}")
+    print()
+
+    if not qualified:
+        print("  (no se encontraron reglas que cumplan la confianza mínima)")
+        print()
+        return
+
+    # Select the best rule per class (highest confidence, then highest coverage)
+
+    ranking: list[PrismRule] = sorted(
+        qualified, key=lambda rule: (rule.confidence, rule.coverage), reverse=True
     )
 
-df_export = pd.DataFrame(filas_export)
-df_export.to_csv("reglas_prism.csv", index=False, encoding="utf-8-sig")
-print(f"\nSe exportaron {len(df_export)} reglas a 'reglas_prism.csv'")
+    best_by_class: dict[str, PrismRule] = {}
+
+    for rule in ranking:
+        if rule.class_value not in best_by_class:
+            best_by_class[rule.class_value] = rule
+
+    for class_value, rule in best_by_class.items():
+        print(f"  {BLUE}Mejor regla para {CLASS_COLUMN} = {class_value}:{RESET}")
+        print(f"    {format_rule(rule)}")
+        print(
+            f"    > confianza={rule.confidence * 100:.1f}%  "
+            f"cobertura={rule.coverage} ({rule.coverage / df.shape[0] * 100:.1f}% del dataset)"
+        )
+        print()
+
+    print("  Ranking de reglas (mayor confianza, luego mayor cobertura):")
+    print()
+
+    for index, rule in enumerate(ranking, 1):
+        antecedent: str = " AND ".join(
+            f"{condition.column} = {condition.value}" for condition in rule.conditions
+        )
+
+        print(
+            f"    {index:>2}. {YELLOW}[{antecedent}]{RESET} -> "
+            f"{CLASS_COLUMN} = {rule.class_value}  "
+            f"(confianza {rule.confidence * 100:.1f}%, cobertura {rule.coverage})"
+        )
+
+    print()
+
+
+def count_examples(df: pd.DataFrame, class_value: str) -> int:
+    return int((df[CLASS_COLUMN] == class_value).sum())
+
+
+def count_matches(df: pd.DataFrame, conditions: list[Condition]) -> int:
+    return int(matches(df, conditions).sum())
+
+
+def count_positives(
+    df: pd.DataFrame, conditions: list[Condition], class_value: str
+) -> int:
+    mask: pd.Series = matches(df, conditions) & (df[CLASS_COLUMN] == class_value)
+
+    return int(mask.sum())
+
+
+def matches(df: pd.DataFrame, conditions: list[Condition]) -> pd.Series:
+    mask: pd.Series = pd.Series(True, index=df.index)
+
+    for condition in conditions:
+        mask &= df[condition.column] == condition.value
+
+    return mask
+
+
+def best_condition(
+    df: pd.DataFrame, class_value: str, used: list[Condition]
+) -> tuple[Condition, float, int] | None:
+    # Pick the feature-and-value that covers the class with the highest confidence
+
+    used_columns: set[str] = {condition.column for condition in used}
+
+    best: tuple[Condition, float, int] | None = None
+
+    for column in df.columns:
+        if column == CLASS_COLUMN or column in used_columns:
+            continue
+
+        for value in df[column].unique():
+            mask_value: pd.Series = df[column] == value
+            total: int = int(mask_value.sum())
+
+            if total == 0:
+                continue
+
+            positives: int = int((mask_value & (df[CLASS_COLUMN] == class_value)).sum())
+
+            confidence: float = positives / total
+
+            if (
+                best is None
+                or confidence > best[1]
+                or (confidence == best[1] and total > best[2])
+            ):
+                best = (Condition(column, value), confidence, total)
+
+    return best
+
+
+def format_rule(rule: PrismRule) -> str:
+    return format_rule_conditions(rule.conditions, rule.class_value)
+
+
+def format_rule_conditions(conditions: Iterable[Condition], class_value: str) -> str:
+    antecedent: str = " AND ".join(
+        f"{condition.column} = {condition.value}" for condition in conditions
+    )
+
+    return (
+        f"SI {YELLOW}[{antecedent}]{RESET} "
+        f"ENTONCES {YELLOW}[{CLASS_COLUMN} = {class_value}]{RESET}"
+    )
+
+
+if __name__ == "__main__":
+    main()
 

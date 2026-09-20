@@ -14,3 +14,17 @@ class Rule:
     support: int
     confidence: float
     lift: float
+
+
+@dataclass(frozen=True, slots=True)
+class Condition:
+    column: str
+    value: str
+
+
+@dataclass(frozen=True, slots=True)
+class PrismRule:
+    conditions: tuple[Condition, ...]
+    class_value: str
+    coverage: int
+    confidence: float
