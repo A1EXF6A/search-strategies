@@ -194,15 +194,24 @@ def report_best_rules(df: pd.DataFrame, rules: list[PrismRule]) -> None:
     print("  Ranking de reglas (mayor confianza, luego mayor cobertura):")
     print()
 
+    total_rows: int = df.shape[0]
+
     for index, rule in enumerate(ranking, 1):
         antecedent: str = " AND ".join(
             f"{condition.column} = {condition.value}" for condition in rule.conditions
         )
 
+        support: int = count_positives(df, list(rule.conditions), rule.class_value)
+
+        class_probability: float = count_examples(df, rule.class_value) / total_rows
+
+        lift: float = rule.confidence / class_probability
+
         print(
             f"    {index:>2}. {YELLOW}[{antecedent}]{RESET} -> "
             f"{CLASS_COLUMN} = {rule.class_value}  "
-            f"(confianza {rule.confidence * 100:.1f}%, cobertura {rule.coverage})"
+            f"(confianza {rule.confidence * 100:.1f}%, cobertura {rule.coverage}, "
+            f"soporte {support}, lift {lift:.2f})"
         )
 
     print()
