@@ -1,0 +1,496 @@
+---
+import "@fontsource/geist-sans/400.css";
+import "@fontsource/geist-sans/500.css";
+import "@fontsource/geist-mono/400.css";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mantenimiento preventivo inteligente</title>
+    <style>
+      :root {
+        --bg: #101418;
+        --panel: #171d23;
+        --border: #26313b;
+        --text: #e6ebf0;
+        --muted: #93a1ad;
+        --accent: #4cc2ff;
+        --green: #3fb27f;
+        --yellow: #e3b341;
+        --orange: #e07b39;
+        --red: #d9503f;
+        --radius: 10px;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Geist Sans', system-ui, sans-serif;
+        line-height: 1.5;
+      }
+
+      header {
+        padding: 28px 20px 8px;
+        text-align: center;
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 500;
+        letter-spacing: 0.2px;
+      }
+
+      header p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      main {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 16px 20px 40px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-top: 16px;
+      }
+
+      .panel h2 {
+        margin: 0 0 14px;
+        font-size: 1.05rem;
+        font-weight: 500;
+      }
+
+      .field {
+        display: grid;
+        grid-template-columns: 1fr 160px;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .field label {
+        color: var(--text);
+        font-size: 0.95rem;
+      }
+
+      .field label small {
+        display: block;
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .field input {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 9px 10px;
+        color: var(--text);
+        font-family: 'Geist Mono', monospace;
+        font-size: 0.95rem;
+      }
+
+      .field input:focus {
+        outline: 2px solid var(--accent);
+        border-color: transparent;
+      }
+
+      button {
+        width: 100%;
+        margin-top: 6px;
+        background: var(--accent);
+        border: none;
+        border-radius: 6px;
+        padding: 12px;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #06202e;
+        cursor: pointer;
+      }
+
+      button:hover { opacity: 0.92; }
+      button:disabled { opacity: 0.6; cursor: default; }
+
+      .loading {
+        display: none;
+        color: var(--muted);
+        text-align: center;
+        padding: 14px 0;
+      }
+
+      .error {
+        display: none;
+        background: #2a1a18;
+        border: 1px solid var(--red);
+        color: #ffb4a8;
+        border-radius: 6px;
+        padding: 12px;
+        margin-top: 14px;
+        font-size: 0.92rem;
+      }
+
+      .result { display: none; }
+
+      .risk-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .risk-score {
+        font-size: 2.6rem;
+        font-weight: 500;
+        font-family: 'Geist Mono', monospace;
+      }
+
+      .risk-score small { font-size: 1.2rem; color: var(--muted); }
+
+      .risk-level {
+        font-size: 1.2rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+      }
+
+      .bar {
+        height: 14px;
+        border-radius: 7px;
+        background: #0b0f13;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        margin: 12px 0 16px;
+      }
+
+      .bar-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 6px;
+        transition: width 0.4s ease;
+      }
+
+      .action {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 12px;
+        margin-top: 4px;
+      }
+
+      .action strong { display: block; font-weight: 500; }
+      .action span { color: var(--muted); font-size: 0.85rem; }
+
+      .factors { margin-top: 16px; }
+      .factors ul { margin: 8px 0 0; padding-left: 20px; }
+      .factors li { margin: 4px 0; }
+
+      .toggle {
+        margin-top: 14px;
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        width: auto;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+      }
+
+      .details { display: none; margin-top: 16px; }
+
+      .details table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      .details th, .details td {
+        border: 1px solid var(--border);
+        padding: 7px 9px;
+        text-align: left;
+      }
+
+      .details th { color: var(--muted); font-weight: 500; }
+
+      .details .gap { color: var(--accent); font-family: 'Geist Mono', monospace; }
+
+      .rules {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      .rules li { margin: 4px 0; }
+
+      footer {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 0 20px 40px;
+        color: var(--muted);
+        font-size: 0.78rem;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Sistema inteligente de mantenimiento preventivo</h1>
+      <p>Lógica difusa (Mamdani) + algoritmo genético · dataset sintético AI4I 2020</p>
+    </header>
+
+    <main>
+      <section class="panel" aria-label="Formulario de condiciones">
+        <h2>Condiciones actuales de la máquina</h2>
+
+        <form id="predict-form" novalidate>
+          <div class="field">
+            <label for="air_temperature">Temperatura del aire<small>K · rango 295–305</small></label>
+            <input id="air_temperature" name="air_temperature" type="number" step="0.1" inputmode="decimal" required placeholder="300.0" />
+          </div>
+          <div class="field">
+            <label for="process_temperature">Temperatura del proceso<small>K · rango 305–314</small></label>
+            <input id="process_temperature" name="process_temperature" type="number" step="0.1" inputmode="decimal" required placeholder="310.0" />
+          </div>
+          <div class="field">
+            <label for="rotational_speed">Velocidad de rotación<small>rpm · rango 1100–3000</small></label>
+            <input id="rotational_speed" name="rotational_speed" type="number" step="1" inputmode="numeric" required placeholder="1500" />
+          </div>
+          <div class="field">
+            <label for="torque">Torque<small>Nm · rango 0–90</small></label>
+            <input id="torque" name="torque" type="number" step="0.1" inputmode="decimal" required placeholder="40.0" />
+          </div>
+          <div class="field">
+            <label for="tool_wear">Desgaste de herramienta<small>min · rango 0–260</small></label>
+            <input id="tool_wear" name="tool_wear" type="number" step="1" inputmode="numeric" required placeholder="100" />
+          </div>
+
+          <button id="analyze-btn" type="submit">Analizar</button>
+        </form>
+
+        <div class="loading" id="loading">Procesando con el sistema difuso…</div>
+
+        <div class="error" id="error" role="alert"></div>
+      </section>
+
+      <section class="panel result" id="result" aria-label="Resultado">
+        <h2>Resultado</h2>
+
+        <div class="risk-row">
+          <div class="risk-score" id="risk-score">—<small> / 100</small></div>
+          <div class="risk-level" id="risk-level">—</div>
+        </div>
+
+        <div class="bar">
+          <div class="bar-fill" id="risk-bar"></div>
+        </div>
+
+        <div class="action">
+          <strong id="action-title">—</strong>
+          <span id="action-desc"></span>
+        </div>
+
+        <div class="factors">
+          <strong>Factores detectados</strong>
+          <ul id="factors-list"></ul>
+        </div>
+
+        <button class="toggle" id="toggle-details" type="button">Ver detalles de la inferencia</button>
+
+        <div class="details" id="details">
+          <p>
+            Brecha térmica (process − air):
+            <span class="gap" id="thermal-gap">—</span>
+          </p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Variable</th>
+                <th>BAJO</th>
+                <th>MEDIO</th>
+                <th>ALTO</th>
+              </tr>
+            </thead>
+            <tbody id="memberships-body"></tbody>
+          </table>
+
+          <div class="rules">
+            <strong>Reglas activadas</strong>
+            <ul id="rules-list"></ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const API_URL = 'http://localhost:8001/api/predict';
+
+      const form = document.getElementById('predict-form') as HTMLFormElement;
+      const loading = document.getElementById('loading') as HTMLElement;
+      const errorBox = document.getElementById('error') as HTMLElement;
+      const result = document.getElementById('result') as HTMLElement;
+      const analyzeBtn = document.getElementById('analyze-btn') as HTMLButtonElement;
+      const details = document.getElementById('details') as HTMLElement;
+      const toggleBtn = document.getElementById('toggle-details') as HTMLButtonElement;
+
+      const LEVEL_COLORS: Record<string, string> = {
+        bajo: '#3fb27f',
+        moderado: '#e3b341',
+        alto: '#e07b39',
+        critico: '#d9503f',
+      };
+
+      const INPUT_LABELS: Record<string, string> = {
+        process_temperature: 'Temperatura del proceso',
+        thermal_gap: 'Brecha térmica',
+        rotational_speed: 'Velocidad de rotación',
+        torque: 'Torque',
+        tool_wear: 'Desgaste de herramienta',
+      };
+
+      interface RuleActivation {
+        name: string;
+        strength: number;
+      }
+
+      interface PredictResponse {
+        risk_score: number;
+        risk_level: string;
+        risk_level_display: string;
+        action: string;
+        thermal_gap: number;
+        factors: string[];
+        activated_rules: RuleActivation[];
+        memberships: Record<string, Record<string, number>>;
+      }
+
+      function showError(message: string): void {
+        errorBox.style.display = 'block';
+        errorBox.textContent = message;
+      }
+
+      function hideError(): void {
+        errorBox.style.display = 'none';
+      }
+
+      form.addEventListener('submit', async (event: Event) => {
+        event.preventDefault();
+        hideError();
+
+        const payload: Record<string, number> = {};
+
+        for (const input of form.querySelectorAll<HTMLInputElement>('input')) {
+          const value = Number(input.value);
+          if (input.value.trim() === '' || Number.isNaN(value)) {
+            showError(`Complete el campo "${input.name}" con un valor numérico.`);
+            return;
+          }
+          payload[input.name] = value;
+        }
+
+        analyzeBtn.disabled = true;
+        loading.style.display = 'block';
+        result.style.display = 'none';
+        details.style.display = 'none';
+
+        try {
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          const body = (await response.json()) as PredictResponse & { detail?: unknown };
+
+          if (!response.ok) {
+            const message =
+              typeof body.detail === 'string' ? body.detail : 'El servidor rechazó los datos. Revise los valores.';
+            throw new Error(message);
+          }
+
+          renderResult(body);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'No se pudo conectar con el backend.';
+          showError(message);
+        } finally {
+          analyzeBtn.disabled = false;
+          loading.style.display = 'none';
+        }
+      });
+
+      function renderResult(data: PredictResponse): void {
+        (document.getElementById('risk-score') as HTMLElement).innerHTML =
+          `${data.risk_score.toFixed(1)}<small> / 100</small>`;
+
+        const level = document.getElementById('risk-level') as HTMLElement;
+        level.textContent = data.risk_level_display;
+        level.style.color = LEVEL_COLORS[data.risk_level] ?? 'var(--text)';
+
+        const bar = document.getElementById('risk-bar') as HTMLElement;
+        bar.style.width = `${Math.min(data.risk_score, 100)}%`;
+        bar.style.background = LEVEL_COLORS[data.risk_level] ?? 'var(--accent)';
+
+        const action = document.getElementById('action-title') as HTMLElement;
+        action.textContent = data.action;
+
+        const actionDesc = document.getElementById('action-desc') as HTMLElement;
+        actionDesc.textContent = `Nivel de riesgo: ${data.risk_level_display}. El índice es la salida del sistema difuso.`;
+
+        const factorsList = document.getElementById('factors-list') as HTMLElement;
+        factorsList.innerHTML = '';
+        for (const factor of data.factors) {
+          const item = document.createElement('li');
+          item.textContent = factor;
+          factorsList.appendChild(item);
+        }
+
+        (document.getElementById('thermal-gap') as HTMLElement).textContent =
+          `${data.thermal_gap.toFixed(2)} K`;
+
+        const membershipsBody = document.getElementById('memberships-body') as HTMLElement;
+        membershipsBody.innerHTML = '';
+
+        for (const [variable, terms] of Object.entries(data.memberships)) {
+          const row = document.createElement('tr');
+          const name = document.createElement('td');
+          name.textContent = INPUT_LABELS[variable] ?? variable;
+          row.appendChild(name);
+
+          for (const term of ['low', 'medium', 'high']) {
+            const cell = document.createElement('td');
+            cell.textContent = terms[term].toFixed(2);
+            row.appendChild(cell);
+          }
+
+          membershipsBody.appendChild(row);
+        }
+
+        const rulesList = document.getElementById('rules-list') as HTMLElement;
+        rulesList.innerHTML = '';
+        for (const rule of data.activated_rules) {
+          const item = document.createElement('li');
+          item.textContent = `${rule.name}  (fuerza ${rule.strength.toFixed(3)})`;
+          rulesList.appendChild(item);
+        }
+
+        result.style.display = 'block';
+      }
+
+      toggleBtn.addEventListener('click', () => {
+        const visible = details.style.display === 'block';
+        details.style.display = visible ? 'none' : 'block';
+        toggleBtn.textContent = visible ? 'Ver detalles de la inferencia' : 'Ocultar detalles';
+      });
+    </script>
+  </body>
+</html>

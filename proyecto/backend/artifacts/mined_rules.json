@@ -1,0 +1,339 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-09-25T18:20:26+00:00",
+  "algorithm": "PRISM",
+  "dataset": "ai4i2020.csv",
+  "discretization": {
+    "parameters": {
+      "process_temperature": {
+        "p1": 306.7,
+        "p2": 310.0,
+        "p3": 313.3
+      },
+      "thermal_gap": {
+        "p1": 5.0,
+        "p2": 7.5,
+        "p3": 10.0
+      },
+      "rotational_speed": {
+        "p1": 1733.3,
+        "p2": 2050.0,
+        "p3": 2366.7
+      },
+      "torque": {
+        "p1": 30.0,
+        "p2": 45.0,
+        "p3": 60.0
+      },
+      "tool_wear": {
+        "p1": 86.7,
+        "p2": 130.0,
+        "p3": 173.3
+      }
+    },
+    "universe_points": 41,
+    "terms": [
+      "low",
+      "medium",
+      "high"
+    ]
+  },
+  "mining": {
+    "min_confidence_failure": 0.4,
+    "min_coverage_failure": 5,
+    "min_confidence_safe": 0.965,
+    "min_coverage_safe": 50
+  },
+  "rules": [
+    {
+      "name": "PR1_torque_high_thermal_gap_medium_tool_wear_low_process_temperature_high_rotational_speed_low",
+      "antecedents": [
+        [
+          "torque",
+          "high"
+        ],
+        [
+          "thermal_gap",
+          "medium"
+        ],
+        [
+          "tool_wear",
+          "low"
+        ],
+        [
+          "process_temperature",
+          "high"
+        ],
+        [
+          "rotational_speed",
+          "low"
+        ]
+      ],
+      "consequent": "high",
+      "confidence": 0.5555555555555556,
+      "coverage": 9,
+      "lift": 16.38806948541462,
+      "class": "failure"
+    },
+    {
+      "name": "PR2_torque_high_thermal_gap_medium_tool_wear_low_process_temperature_medium_rotational_speed_low",
+      "antecedents": [
+        [
+          "torque",
+          "high"
+        ],
+        [
+          "thermal_gap",
+          "medium"
+        ],
+        [
+          "tool_wear",
+          "low"
+        ],
+        [
+          "process_temperature",
+          "medium"
+        ],
+        [
+          "rotational_speed",
+          "low"
+        ]
+      ],
+      "consequent": "high",
+      "confidence": 0.5416666666666666,
+      "coverage": 48,
+      "lift": 15.978367748279252,
+      "class": "failure"
+    },
+    {
+      "name": "PR3_torque_high_thermal_gap_medium_tool_wear_medium_process_temperature_medium_rotational_speed_low",
+      "antecedents": [
+        [
+          "torque",
+          "high"
+        ],
+        [
+          "thermal_gap",
+          "medium"
+        ],
+        [
+          "tool_wear",
+          "medium"
+        ],
+        [
+          "process_temperature",
+          "medium"
+        ],
+        [
+          "rotational_speed",
+          "low"
+        ]
+      ],
+      "consequent": "high",
+      "confidence": 0.5238095238095238,
+      "coverage": 21,
+      "lift": 15.451608371962354,
+      "class": "failure"
+    },
+    {
+      "name": "PR4_torque_high_thermal_gap_medium_process_temperature_medium_rotational_speed_low_tool_wear_high",
+      "antecedents": [
+        [
+          "torque",
+          "high"
+        ],
+        [
+          "thermal_gap",
+          "medium"
+        ],
+        [
+          "process_temperature",
+          "medium"
+        ],
+        [
+          "rotational_speed",
+          "low"
+        ],
+        [
+          "tool_wear",
+          "high"
+        ]
+      ],
+      "consequent": "high",
+      "confidence": 0.5161290322580645,
+      "coverage": 31,
+      "lift": 15.225045199352936,
+      "class": "failure"
+    },
+    {
+      "name": "PR5_rotational_speed_high_tool_wear_low_process_temperature_high_thermal_gap_high_torque_low",
+      "antecedents": [
+        [
+          "rotational_speed",
+          "high"
+        ],
+        [
+          "tool_wear",
+          "low"
+        ],
+        [
+          "process_temperature",
+          "high"
+        ],
+        [
+          "thermal_gap",
+          "high"
+        ],
+        [
+          "torque",
+          "low"
+        ]
+      ],
+      "consequent": "high",
+      "confidence": 0.5,
+      "coverage": 6,
+      "lift": 14.749262536873157,
+      "class": "failure"
+    },
+    {
+      "name": "PR6_torque_high_tool_wear_high_process_temperature_high_thermal_gap_high_rotational_speed_low",
+      "antecedents": [
+        [
+          "torque",
+          "high"
+        ],
+        [
+          "tool_wear",
+          "high"
+        ],
+        [
+          "process_temperature",
+          "high"
+        ],
+        [
+          "thermal_gap",
+          "high"
+        ],
+        [
+          "rotational_speed",
+          "low"
+        ]
+      ],
+      "consequent": "high",
+      "confidence": 0.45161290322580644,
+      "coverage": 31,
+      "lift": 13.321914549433819,
+      "class": "failure"
+    },
+    {
+      "name": "PR7_torque_high_tool_wear_high_process_temperature_low_thermal_gap_high_rotational_speed_low",
+      "antecedents": [
+        [
+          "torque",
+          "high"
+        ],
+        [
+          "tool_wear",
+          "high"
+        ],
+        [
+          "process_temperature",
+          "low"
+        ],
+        [
+          "thermal_gap",
+          "high"
+        ],
+        [
+          "rotational_speed",
+          "low"
+        ]
+      ],
+      "consequent": "high",
+      "confidence": 0.40625,
+      "coverage": 32,
+      "lift": 11.983775811209439,
+      "class": "failure"
+    },
+    {
+      "name": "PS1_torque_low_rotational_speed_low_tool_wear_low",
+      "antecedents": [
+        [
+          "torque",
+          "low"
+        ],
+        [
+          "rotational_speed",
+          "low"
+        ],
+        [
+          "tool_wear",
+          "low"
+        ]
+      ],
+      "consequent": "low",
+      "confidence": 1.0,
+      "coverage": 1670,
+      "lift": 1.0350895352447986,
+      "class": "safe"
+    },
+    {
+      "name": "PS2_torque_medium_thermal_gap_high_tool_wear_medium",
+      "antecedents": [
+        [
+          "torque",
+          "medium"
+        ],
+        [
+          "thermal_gap",
+          "high"
+        ],
+        [
+          "tool_wear",
+          "medium"
+        ]
+      ],
+      "consequent": "low",
+      "confidence": 1.0,
+      "coverage": 930,
+      "lift": 1.0350895352447986,
+      "class": "safe"
+    },
+    {
+      "name": "PS3_rotational_speed_medium_tool_wear_medium",
+      "antecedents": [
+        [
+          "rotational_speed",
+          "medium"
+        ],
+        [
+          "tool_wear",
+          "medium"
+        ]
+      ],
+      "consequent": "low",
+      "confidence": 1.0,
+      "coverage": 75,
+      "lift": 1.0350895352447986,
+      "class": "safe"
+    },
+    {
+      "name": "PS4_rotational_speed_medium_thermal_gap_medium",
+      "antecedents": [
+        [
+          "rotational_speed",
+          "medium"
+        ],
+        [
+          "thermal_gap",
+          "medium"
+        ]
+      ],
+      "consequent": "low",
+      "confidence": 1.0,
+      "coverage": 57,
+      "lift": 1.0350895352447986,
+      "class": "safe"
+    }
+  ]
+}

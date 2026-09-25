@@ -1,0 +1,96 @@
+{
+  "version": "1.0",
+  "seed": 42,
+  "generated_at": "2026-09-25T18:31:50+00:00",
+  "hyperparameters": {
+    "population_size": 30,
+    "generations": 50,
+    "elite_count": 2,
+    "crossover_rate": 0.8,
+    "mutation_rate": 0.1,
+    "risk_threshold": 50.0,
+    "fitness_sample_size": 600
+  },
+  "fitness": {
+    "balanced_accuracy_best_generation": 0.8796,
+    "balanced_accuracy_train": 0.8648,
+    "validation": {
+      "balanced_accuracy": 0.8581,
+      "accuracy": 0.9087,
+      "precision": 0.244,
+      "recall": 0.8039,
+      "f1": 0.3744,
+      "confusion_matrix": [
+        [
+          41,
+          127
+        ],
+        [
+          10,
+          1322
+        ]
+      ]
+    }
+  },
+  "parameters": {
+    "process_temperature": {
+      "p1": 304.05,
+      "p2": 305.24,
+      "p3": 319.29
+    },
+    "thermal_gap": {
+      "p1": 3.7,
+      "p2": 4.29,
+      "p3": 9.81
+    },
+    "rotational_speed": {
+      "p1": 1267.27,
+      "p2": 2299.48,
+      "p3": 2337.48
+    },
+    "torque": {
+      "p1": 14.58,
+      "p2": 16.38,
+      "p3": 50.13
+    },
+    "tool_wear": {
+      "p1": 148.76,
+      "p2": 184.0,
+      "p3": 210.37
+    }
+  },
+  "baseline_metrics": {
+    "balanced_accuracy": 0.7687,
+    "accuracy": 0.8454,
+    "precision": 0.1394,
+    "recall": 0.6863,
+    "f1": 0.2318,
+    "confusion_matrix": [
+      [
+        35,
+        216
+      ],
+      [
+        16,
+        1234
+      ]
+    ]
+  },
+  "optimized_metrics": {
+    "balanced_accuracy": 0.8862,
+    "accuracy": 0.9081,
+    "precision": 0.2514,
+    "recall": 0.8627,
+    "f1": 0.3894,
+    "confusion_matrix": [
+      [
+        44,
+        131
+      ],
+      [
+        7,
+        1319
+      ]
+    ]
+  }
+}
