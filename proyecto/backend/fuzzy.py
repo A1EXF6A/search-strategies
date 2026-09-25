@@ -5,7 +5,13 @@ from typing import cast
 import numpy as np
 import skfuzzy as fuzz
 from numpy.typing import NDArray
-from skfuzzy.control import Antecedent, Consequent, ControlSystem, ControlSystemSimulation, Rule
+from skfuzzy.control import (
+    Antecedent,
+    Consequent,
+    ControlSystem,
+    ControlSystemSimulation,
+    Rule,
+)
 from skfuzzy.control.controlsystem import CrispValueCalculator
 from skfuzzy.control.state import StatePerSimulation
 
@@ -33,6 +39,7 @@ def _sim_state(property_value: object) -> StatePerSimulation:
 
 def _sim_float(property_value: object, simulation: object) -> float:
     return float(cast(float, _sim_state(property_value)[simulation]))
+
 
 warnings.filterwarnings(
     "ignore",
@@ -64,7 +71,9 @@ class FuzzySimulation(ControlSystemSimulation):
         for antecedent in self.ctrl.antecedents:
             if _sim_state(antecedent.input)[self] is None:
                 raise ValueError("All antecedents must have input values!")
-            CrispValueCalculator(antecedent, self).fuzz(_sim_state(antecedent.input)[self])
+            CrispValueCalculator(antecedent, self).fuzz(
+                _sim_state(antecedent.input)[self]
+            )
         first = True
         for rule in self._ordered_rules:
             if first:
@@ -84,9 +93,7 @@ class FuzzySimulation(ControlSystemSimulation):
 
 
 class FuzzySystem:
-    def __init__(
-        self, parameters: dict[str, dict[str, float]] | None = None
-    ) -> None:
+    def __init__(self, parameters: dict[str, dict[str, float]] | None = None) -> None:
         self.parameters: dict[str, dict[str, float]] = (
             parameters if parameters is not None else DEFAULT_PARAMETERS
         )
@@ -95,14 +102,18 @@ class FuzzySystem:
 
         for variable in FUZZY_VARIABLES:
             spec: VariableSpec = VARIABLE_SPECS[variable]
-            universe: FloatArray = np.linspace(spec["min"], spec["max"], UNIVERSE_POINTS)
+            universe: FloatArray = np.linspace(
+                spec["min"], spec["max"], UNIVERSE_POINTS
+            )
             antecedent = Antecedent(universe, variable)
             cut: dict[str, float] = self.parameters[variable]
 
             antecedent["low"] = fuzz.trapmf(
                 universe, [spec["min"], spec["min"], cut["p1"], cut["p2"]]
             )
-            antecedent["medium"] = fuzz.trimf(universe, [cut["p1"], cut["p2"], cut["p3"]])
+            antecedent["medium"] = fuzz.trimf(
+                universe, [cut["p1"], cut["p2"], cut["p3"]]
+            )
             antecedent["high"] = fuzz.trapmf(
                 universe, [cut["p2"], cut["p3"], spec["max"], spec["max"]]
             )
@@ -183,7 +194,9 @@ class FuzzySystem:
             simulation.compute()
 
             raw_risk: float = (
-                float(simulation.output["risk"]) if "risk" in simulation.output else RISK_MIN
+                float(simulation.output["risk"])
+                if "risk" in simulation.output
+                else RISK_MIN
             )
             risk[i] = raw_risk if math.isfinite(raw_risk) else RISK_MIN
 
@@ -206,7 +219,9 @@ class FuzzySystem:
         simulation.compute()
 
         raw_risk: float = (
-            float(simulation.output["risk"]) if "risk" in simulation.output else RISK_MIN
+            float(simulation.output["risk"])
+            if "risk" in simulation.output
+            else RISK_MIN
         )
         risk: float = raw_risk if math.isfinite(raw_risk) else RISK_MIN
 
@@ -243,7 +258,9 @@ class FuzzySystem:
         for rule in self._ordered_rules:
             strength_out: float = _sim_float(rule.aggregate_firing, simulation)
             output_term: str = rule.consequent[0].term.label
-            output_strengths[output_term] = max(output_strengths[output_term], strength_out)
+            output_strengths[output_term] = max(
+                output_strengths[output_term], strength_out
+            )
 
         output_rounded: dict[str, float] = {}
 
@@ -256,3 +273,4 @@ class FuzzySystem:
             "activated_rules": activated_rules,
             "output_strengths": output_rounded,
         }
+

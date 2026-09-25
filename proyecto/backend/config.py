@@ -145,6 +145,48 @@ FACTOR_DESCRIPTIONS: dict[tuple[str, str], str] = {
 
 MAX_EXPLANATION_FACTORS: int = 4
 
+RULE_LABELS: dict[str, str] = {
+    "PR1_torque_high_thermal_gap_medium_tool_wear_low_process_temperature_high_rotational_speed_low": (
+        "Sobrecarga de potencia — torque alto, rotación baja, brecha térmica moderada, "
+        "temperatura de proceso alta"
+    ),
+    "PR2_torque_high_thermal_gap_medium_tool_wear_low_process_temperature_medium_rotational_speed_low": (
+        "Disipación térmica comprometida — torque alto, rotación baja, brecha térmica moderada, "
+        "desgaste bajo"
+    ),
+    "PR3_torque_high_thermal_gap_medium_tool_wear_medium_process_temperature_medium_rotational_speed_low": (
+        "Disipación térmica comprometida — torque alto, rotación baja, brecha térmica moderada, "
+        "desgaste medio"
+    ),
+    "PR4_torque_high_thermal_gap_medium_process_temperature_medium_rotational_speed_low_tool_wear_high": (
+        "Sobrecalentamiento con desgaste avanzado — torque alto, rotación baja, "
+        "brecha térmica moderada, herramienta muy desgastada"
+    ),
+    "PR5_rotational_speed_high_tool_wear_low_process_temperature_high_thermal_gap_high_torque_low": (
+        "Condición anómala mixta — velocidad elevada, torque bajo, desgaste bajo"
+    ),
+    "PR6_torque_high_tool_wear_high_process_temperature_high_thermal_gap_high_rotational_speed_low": (
+        "Desgaste avanzado bajo sobreesfuerzo — herramienta muy desgastada, torque alto, rotación baja"
+    ),
+    "PR7_torque_high_tool_wear_high_process_temperature_low_thermal_gap_high_rotational_speed_low": (
+        "Sobreesfuerzo mecánico — torque alto, rotación baja, herramienta muy desgastada"
+    ),
+    "PS1_torque_low_rotational_speed_low_tool_wear_low": (
+        "Operación segura — torque bajo, rotación baja, desgaste bajo"
+    ),
+    "PS2_torque_medium_thermal_gap_high_tool_wear_medium": (
+        "Operación segura — torque medio, brecha térmica elevada, desgaste medio"
+    ),
+    "PS3_rotational_speed_medium_tool_wear_medium": (
+        "Operación segura — rotación media, desgaste medio"
+    ),
+    "PS4_rotational_speed_medium_thermal_gap_medium": (
+        "Operación segura — rotación media, brecha térmica media"
+    ),
+}
+
+DEFAULT_RULE_LABEL: str = "Regla sin etiqueta específica"
+
 POPULATION_SIZE: int = 30
 GENERATIONS: int = 50
 ELITE_COUNT: int = 2

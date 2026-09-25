@@ -1,5 +1,4 @@
 import random
-import warnings
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import partial
@@ -189,7 +188,10 @@ class GeneticOptimizer:
         self.seed = seed
 
     def fitness(
-        self, genes: FloatArray, values: dict[str, FloatArray], y_true: NDArray[np.int64]
+        self,
+        genes: FloatArray,
+        values: dict[str, FloatArray],
+        y_true: NDArray[np.int64],
     ) -> float:
         system: FuzzySystem = FuzzySystem(decode_genes(genes))
 
@@ -200,7 +202,10 @@ class GeneticOptimizer:
         return evaluate_predictions(y_true, y_pred).balanced_accuracy
 
     def _fitness_values(
-        self, individual: list[float], values: dict[str, FloatArray], y_true: NDArray[np.int64]
+        self,
+        individual: list[float],
+        values: dict[str, FloatArray],
+        y_true: NDArray[np.int64],
     ) -> tuple[float, ...]:
         return (self.fitness(np.asarray(individual, dtype=float), values, y_true),)
 
@@ -256,7 +261,9 @@ class GeneticOptimizer:
         population[0][:] = genes_from_parameters(DEFAULT_PARAMETERS)
 
         for individual in population:
-            individual.fitness.values = self._fitness_values(individual, values_fit, y_fit)
+            individual.fitness.values = self._fitness_values(
+                individual, values_fit, y_fit
+            )
 
         hall_of_fame = tools.HallOfFame(self.elite_count)
         hall_of_fame.update(population)
@@ -297,7 +304,9 @@ class GeneticOptimizer:
 
             for individual in offspring:
                 if not individual.fitness.valid:
-                    individual.fitness.values = self._fitness_values(individual, values_fit, y_fit)
+                    individual.fitness.values = self._fitness_values(
+                        individual, values_fit, y_fit
+                    )
 
             population = elites + offspring
             hall_of_fame.update(population)
@@ -331,8 +340,11 @@ class GeneticOptimizer:
 
             risk_val, _, _ = system.evaluate_batch(values_val)
 
-            y_pred_val: NDArray[np.int64] = (risk_val >= RISK_THRESHOLD).astype(np.int64)
+            y_pred_val: NDArray[np.int64] = (risk_val >= RISK_THRESHOLD).astype(
+                np.int64
+            )
 
             result.validation_metrics = evaluate_predictions(y_val, y_pred_val)
 
         return result
+

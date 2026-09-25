@@ -41,6 +41,7 @@ class PredictionInput(BaseModel):
 
 class RuleActivation(BaseModel):
     name: str
+    cause: str
     strength: float = Field(ge=0.0, le=1.0)
 
 

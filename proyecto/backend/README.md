@@ -205,6 +205,14 @@ No se usa texto fijo: los **factores** se derivan de los antecedentes de las
 reglas realmente activadas. Por ejemplo, si se activa una regla con
 `tool_wear = HIGH`, el sistema reporta "Desgaste de herramienta elevado".
 
+Cada regla además tiene una **etiqueta de causa probable** (`RULE_LABELS` en
+`config.py`, con el formato *causa — condiciones*, p. ej. `Sobreesfuerzo
+mecánico — torque alto, rotación baja, herramienta muy desgastada` para PR7).
+La API incluye ese campo como `cause` dentro de cada regla activada y el
+frontend lo muestra en lugar del nombre técnico de la regla. Es una capa
+interpretable: sugiere el patrón físico detrás del riesgo, sin afirmar un
+diagnóstico formal del modo de fallo.
+
 ## 8. Índice de riesgo y niveles
 
 La salida difusa es un número 0–100 llamado **Índice de riesgo** (no
@@ -295,7 +303,7 @@ uvicorn main:app --host localhost --port 8001
 Endpoints:
 
 - `GET  /api/health` → `{"status": "ok"}`
-- `POST /api/predict` → índice, nivel, acción, factores, reglas y membresías
+- `POST /api/predict` → índice, nivel, acción, factores, reglas (con `cause`) y membresías
 
 Ejemplo de request:
 
@@ -369,11 +377,19 @@ python -m pytest tests/
 
 Cubren: funciones de pertenencia (mínimo, máximo, punto medio, fuera de
 rango), fuzzificación (pertenencias en [0,1]), reglas cargadas del artefacto
-`mined_rules.json`, minería PRISM (determinista, reglas sintéticas esperadas,
+`mined_rules.json`, etiquetas de causa de las reglas (completas y sin
+huérfanas), minería PRISM (determinista, reglas sintéticas esperadas,
 discretización de términos), defuzzificación (riesgo en [0,100]), determinismo
 del GA con seed fija (`p1 < p2 < p3`, dos corridas idénticas con la misma seed)
 y la API (válido, faltantes, strings, fuera de rango, incoherencia térmica,
 NaN).
+
+Calidad de código:
+
+```bash
+ruff check .    # estilo e importaciones (config: ruff.toml)
+pyright         # tipado estático, 0 errores
+```
 
 ## 15. Validación de la API
 

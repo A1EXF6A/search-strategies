@@ -3,12 +3,14 @@ from pathlib import Path
 from typing import cast
 
 from config import (
+    DEFAULT_RULE_LABEL,
     FACTOR_DESCRIPTIONS,
     MAX_EXPLANATION_FACTORS,
     MISSING_PARAMS_MESSAGE,
     MODEL_VERSION,
     OPTIMIZED_PARAMS_PATH,
     RISK_LEVELS,
+    RULE_LABELS,
 )
 from fuzzy import FuzzySystem
 from schemas import PredictionInput, PredictionResponse, RuleActivation
@@ -98,9 +100,12 @@ class MaintenanceModel:
         activated_rules: list[RuleActivation] = []
 
         for rule in cast(list[dict[str, object]], result["activated_rules"]):
+            rule_name: str = str(rule["name"])
+
             activated_rules.append(
                 RuleActivation(
-                    name=str(rule["name"]),
+                    name=rule_name,
+                    cause=RULE_LABELS.get(rule_name, DEFAULT_RULE_LABEL),
                     strength=float(cast(float, rule["strength"])),
                 )
             )

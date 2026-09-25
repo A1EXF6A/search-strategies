@@ -191,7 +191,14 @@ AND → `min(...)`. Combinación de reglas → `max(...)` (mecanismo por defecto
 
 ## 24. Explicación interna
 
-El motor devuelve `risk_score`, `risk_level`, `action`, `activated_rules` (nombre + fuerza) y membresías. El frontend genera la explicación.
+El motor devuelve `risk_score`, `risk_level`, `action`, `activated_rules`
+(nombre + fuerza) y membresías. El frontend genera la explicación.
+
+Cada regla activada incluye además una **etiqueta de causa probable**
+(`cause`, formato *causa — condiciones*; fuente: `RULE_LABELS` en
+`config.py`). Es una capa interpretable que sugiere el patrón físico del
+riesgo (p. ej. PR7 → "Sobreesfuerzo mecánico — torque alto, rotación baja,
+herramienta muy desgastada") sin afirmar un diagnóstico formal del modo.
 
 ## 25. API del backend
 
@@ -298,7 +305,7 @@ Preguntas: ¿cómo funciona sin optimización? ¿qué cambia con GA? ¿mejora la
 
 ## 43. Criterios de terminado
 
-Checklist: frontend con 5 variables, validación en ambos lados, thermal_gap, fuzzificación, membresías, reglas generadas por PRISM (minería reproducible, métricas confianza/cobertura/lift por regla, artefacto mined_rules.json), Mamdani, centroide, riesgo 0-100, nivel, acción, factores, GA optimiza membresías, fitness con datos, split 70/15/15, archivo de parámetros, sistema sin GA por request, comparación antes/después, pruebas, README, respeta convenciones, sin complejidad innecesaria.
+Checklist: frontend con 5 variables, validación en ambos lados, thermal_gap, fuzzificación, membresías, reglas generadas por PRISM (minería reproducible, métricas confianza/cobertura/lift por regla, artefacto mined_rules.json), Mamdani, centroide, riesgo 0-100, nivel, acción, factores, etiquetas de causa probable por regla (RULE_LABELS, formato causa — condiciones, API `cause`, frontend), GA optimiza membresías, fitness con datos, split 70/15/15, archivo de parámetros, sistema sin GA por request, comparación antes/después, pruebas, README, respeta convenciones, sin complejidad innecesaria.
 
 ## 44. Prioridad final
 

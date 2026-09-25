@@ -1,10 +1,11 @@
 import json
+from collections.abc import Generator
+from typing import cast
+
 import numpy as np
 import pandas as pd
 import pytest
-from collections.abc import Generator
 from fastapi.testclient import TestClient
-from typing import cast
 
 from config import (
     DEFAULT_PARAMETERS,
@@ -14,6 +15,7 @@ from config import (
     OPTIMIZED_PARAMS_PATH,
     RISK_MAX,
     RISK_MIN,
+    RULE_LABELS,
 )
 from fuzzy import FuzzySystem
 from genetic import GeneticOptimizer, decode_genes
@@ -234,6 +236,20 @@ def test_mined_rules_loaded_from_artifact() -> None:
         assert str(entry["consequent"]) in ("low", "high", "critical")
 
 
+def test_rule_labels_complete() -> None:
+    loaded_names: set[str] = set()
+
+    for entry in FUZZY_RULES:
+        loaded_names.add(str(entry["name"]))
+
+    assert len(RULE_LABELS) == len(loaded_names)
+    assert set(RULE_LABELS.keys()) == loaded_names
+
+    for label in RULE_LABELS.values():
+        assert "—" in label
+        assert len(label) > 10
+
+
 def test_discretize_maps_terms() -> None:
     df: pd.DataFrame = pd.DataFrame(
         {
@@ -313,6 +329,10 @@ def test_predict_valid(client: TestClient) -> None:
     assert body["thermal_gap"] == pytest.approx(10.0)
     assert isinstance(body["factors"], list)
     assert body["memberships"]["torque"]["high"] >= 0.0
+
+    for rule in body["activated_rules"]:
+        assert rule["name"].startswith(("PR", "PS"))
+        assert len(rule["cause"]) > 10
 
 
 def test_predict_missing_field(client: TestClient) -> None:
