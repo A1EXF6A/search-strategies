@@ -1,338 +1,411 @@
 ---
-import "@fontsource/geist-sans/400.css";
-import "@fontsource/geist-sans/500.css";
-import "@fontsource/geist-mono/400.css";
+import Base from "../layouts/Base.astro";
 ---
 
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Mantenimiento preventivo inteligente</title>
-    <style>
-      :root {
-        --bg: #101418;
-        --panel: #171d23;
-        --border: #26313b;
-        --text: #e6ebf0;
-        --muted: #93a1ad;
-        --accent: #4cc2ff;
-        --green: #3fb27f;
-        --yellow: #e3b341;
-        --orange: #e07b39;
-        --red: #d9503f;
-        --radius: 10px;
-      }
+<Base title="Mantenimiento preventivo inteligente" activeTab="operacion">
+  <style>
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px 40px;
+    }
 
-      * { box-sizing: border-box; }
+    .scene-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-top: 0;
+    }
 
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--text);
-        font-family: 'Geist Sans', system-ui, sans-serif;
-        line-height: 1.5;
-      }
+    .rig {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+    }
 
-      header {
-        padding: 28px 20px 8px;
-        text-align: center;
-      }
+    .machine-col {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
 
-      header h1 {
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 500;
-        letter-spacing: 0.2px;
-      }
+    .machine-img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: radial-gradient(ellipse at 50% 30%, #1a222b 0%, #0e1216 75%);
+    }
 
-      header p {
-        margin: 6px 0 0;
-        color: var(--muted);
-        font-size: 0.95rem;
-      }
+    .panel-col {
+      flex: 0 0 296px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-      main {
-        max-width: 680px;
-        margin: 0 auto;
-        padding: 16px 20px 40px;
-      }
+    .input-card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
 
-      .panel {
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 20px;
-        margin-top: 16px;
-      }
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+    }
 
-      .panel h2 {
-        margin: 0 0 14px;
-        font-size: 1.05rem;
-        font-weight: 500;
-      }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 1px solid rgba(76, 194, 255, 0.6);
+      color: #06202e;
+      font-family: 'Geist Mono', monospace;
+      font-weight: 500;
+    }
 
-      .field {
-        display: grid;
-        grid-template-columns: 1fr 160px;
-        gap: 10px;
-        align-items: center;
-        margin-bottom: 12px;
-      }
+    .card-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-      .field label {
-        color: var(--text);
-        font-size: 0.95rem;
-      }
+    .card-head label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text);
+    }
 
-      .field label small {
-        display: block;
-        color: var(--muted);
-        font-size: 0.8rem;
-      }
+    .card-head label small {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 400;
+      color: var(--muted);
+    }
 
-      .field input {
-        width: 100%;
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 9px 10px;
-        color: var(--text);
-        font-family: 'Geist Mono', monospace;
-        font-size: 0.95rem;
-      }
+    .card-body {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-      .field input:focus {
-        outline: 2px solid var(--accent);
-        border-color: transparent;
-      }
+    .card-body input {
+      flex: 1;
+      min-width: 0;
+      background: #0c1116;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      color: var(--text);
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.9rem;
+    }
 
-      button {
-        width: 100%;
-        margin-top: 6px;
-        background: var(--accent);
-        border: none;
-        border-radius: 6px;
-        padding: 12px;
-        font-size: 1rem;
-        font-weight: 500;
-        color: #06202e;
-        cursor: pointer;
-      }
+    .card-body input:focus {
+      outline: 2px solid var(--accent);
+      border-color: transparent;
+    }
 
-      button:hover { opacity: 0.92; }
-      button:disabled { opacity: 0.6; cursor: default; }
+    .unit {
+      flex: none;
+      font-size: 0.68rem;
+      color: var(--accent);
+      border: 1px solid rgba(76, 194, 255, 0.35);
+      border-radius: 4px;
+      padding: 0 5px;
+    }
 
-      .loading {
-        display: none;
-        color: var(--muted);
-        text-align: center;
-        padding: 14px 0;
-      }
+    .range {
+      font-size: 0.7rem;
+      color: #6d7b88;
+    }
 
-      .error {
-        display: none;
-        background: #2a1a18;
-        border: 1px solid var(--red);
-        color: #ffb4a8;
-        border-radius: 6px;
-        padding: 12px;
-        margin-top: 14px;
-        font-size: 0.92rem;
-      }
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 14px;
+    }
 
-      .result { display: none; }
+    button.primary {
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      padding: 12px 22px;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #06202e;
+      cursor: pointer;
+    }
 
-      .risk-row {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 12px;
-      }
+    button.primary:hover { opacity: 0.92; }
+    button.primary:disabled { opacity: 0.6; cursor: default; }
 
-      .risk-score {
-        font-size: 2.6rem;
-        font-weight: 500;
-        font-family: 'Geist Mono', monospace;
-      }
+    .units-note {
+      margin-top: 12px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 6px 16px;
+    }
 
-      .risk-score small { font-size: 1.2rem; color: var(--muted); }
+    .units-note code {
+      font-family: 'Geist Mono', monospace;
+      color: var(--accent);
+    }
 
-      .risk-level {
-        font-size: 1.2rem;
-        font-weight: 500;
-        letter-spacing: 0.5px;
-      }
+    .loading {
+      display: none;
+      color: var(--muted);
+      text-align: center;
+      padding: 14px 0;
+    }
 
-      .bar {
-        height: 14px;
-        border-radius: 7px;
-        background: #0b0f13;
-        border: 1px solid var(--border);
-        overflow: hidden;
-        margin: 12px 0 16px;
-      }
+    .error {
+      display: none;
+      background: #2a1a18;
+      border: 1px solid var(--red);
+      color: #ffb4a8;
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 14px;
+      font-size: 0.92rem;
+    }
 
-      .bar-fill {
-        height: 100%;
-        width: 0%;
-        border-radius: 6px;
-        transition: width 0.4s ease;
-      }
+    .result {
+      display: none;
+      margin-top: 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
 
-      .action {
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 12px;
-        margin-top: 4px;
-      }
+    .result h2 { margin: 0 0 14px; font-size: 1.05rem; font-weight: 500; }
 
-      .action strong { display: block; font-weight: 500; }
-      .action span { color: var(--muted); font-size: 0.85rem; }
+    .risk-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
 
-      .factors { margin-top: 16px; }
-      .factors ul { margin: 8px 0 0; padding-left: 20px; }
-      .factors li { margin: 4px 0; }
+    .risk-score {
+      font-size: 2.6rem;
+      font-weight: 500;
+      font-family: 'Geist Mono', monospace;
+    }
 
-      .toggle {
-        margin-top: 14px;
-        background: none;
-        border: 1px solid var(--border);
-        color: var(--muted);
-        width: auto;
-        padding: 8px 12px;
-        font-size: 0.9rem;
-      }
+    .risk-score small { font-size: 1.2rem; color: var(--muted); }
 
-      .details { display: none; margin-top: 16px; }
+    .risk-level {
+      font-size: 1.2rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
 
-      .details table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.9rem;
-      }
+    .bar {
+      height: 14px;
+      border-radius: 7px;
+      background: #0b0f13;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin: 12px 0 16px;
+    }
 
-      .details th, .details td {
-        border: 1px solid var(--border);
-        padding: 7px 9px;
-        text-align: left;
-      }
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 6px;
+      transition: width 0.4s ease;
+    }
 
-      .details th { color: var(--muted); font-weight: 500; }
+    .action {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 4px;
+    }
 
-      .details .gap { color: var(--accent); font-family: 'Geist Mono', monospace; }
+    .action strong { display: block; font-weight: 500; }
+    .action span { color: var(--muted); font-size: 0.85rem; }
 
-      .rules {
-        margin-top: 14px;
-        font-size: 0.9rem;
-        color: var(--muted);
-      }
+    .factors { margin-top: 16px; }
+    .factors ul { margin: 8px 0 0; padding-left: 20px; }
+    .factors li { margin: 4px 0; }
 
-      .rules li { margin: 4px 0; }
+    .toggle {
+      margin-top: 14px;
+      display: inline-block;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
 
-      footer {
-        max-width: 680px;
-        margin: 0 auto;
-        padding: 0 20px 40px;
-        color: var(--muted);
-        font-size: 0.78rem;
-        text-align: center;
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <h1>Sistema inteligente de mantenimiento preventivo</h1>
-      <p>Lógica difusa (Mamdani) + algoritmo genético · dataset sintético AI4I 2020</p>
-    </header>
+    a.toggle:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
 
-    <main>
-      <section class="panel" aria-label="Formulario de condiciones">
-        <h2>Condiciones actuales de la máquina</h2>
+    @media (max-width: 920px) {
+      .rig { flex-direction: column; }
+      .panel-col { flex-basis: auto; width: 100%; }
+    }
+  </style>
 
-        <form id="predict-form" novalidate>
-          <div class="field">
-            <label for="air_temperature">Temperatura del aire<small>K · rango 295–305</small></label>
-            <input id="air_temperature" name="air_temperature" type="number" step="0.1" inputmode="decimal" required placeholder="300.0" />
-          </div>
-          <div class="field">
-            <label for="process_temperature">Temperatura del proceso<small>K · rango 305–314</small></label>
-            <input id="process_temperature" name="process_temperature" type="number" step="0.1" inputmode="decimal" required placeholder="310.0" />
-          </div>
-          <div class="field">
-            <label for="rotational_speed">Velocidad de rotación<small>rpm · rango 1100–3000</small></label>
-            <input id="rotational_speed" name="rotational_speed" type="number" step="1" inputmode="numeric" required placeholder="1500" />
-          </div>
-          <div class="field">
-            <label for="torque">Torque<small>Nm · rango 0–90</small></label>
-            <input id="torque" name="torque" type="number" step="0.1" inputmode="decimal" required placeholder="40.0" />
-          </div>
-          <div class="field">
-            <label for="tool_wear">Desgaste de herramienta<small>min · rango 0–260</small></label>
-            <input id="tool_wear" name="tool_wear" type="number" step="1" inputmode="numeric" required placeholder="100" />
-          </div>
-
-          <button id="analyze-btn" type="submit">Analizar</button>
-        </form>
-
-        <div class="loading" id="loading">Procesando con el sistema difuso…</div>
-
-        <div class="error" id="error" role="alert"></div>
-      </section>
-
-      <section class="panel result" id="result" aria-label="Resultado">
-        <h2>Resultado</h2>
-
-        <div class="risk-row">
-          <div class="risk-score" id="risk-score">—<small> / 100</small></div>
-          <div class="risk-level" id="risk-level">—</div>
-        </div>
-
-        <div class="bar">
-          <div class="bar-fill" id="risk-bar"></div>
-        </div>
-
-        <div class="action">
-          <strong id="action-title">—</strong>
-          <span id="action-desc"></span>
-        </div>
-
-        <div class="factors">
-          <strong>Factores detectados</strong>
-          <ul id="factors-list"></ul>
-        </div>
-
-        <button class="toggle" id="toggle-details" type="button">Ver detalles de la inferencia</button>
-
-        <div class="details" id="details">
-          <p>
-            Brecha térmica (process − air):
-            <span class="gap" id="thermal-gap">—</span>
-          </p>
-
-          <table>
-            <thead>
-              <tr>
-                <th>Variable</th>
-                <th>BAJO</th>
-                <th>MEDIO</th>
-                <th>ALTO</th>
-              </tr>
-            </thead>
-            <tbody id="memberships-body"></tbody>
-          </table>
-
-          <div class="rules">
-            <strong>Reglas activadas</strong>
-            <ul id="rules-list"></ul>
+  <main>
+    <section class="scene-panel" aria-label="Máquina de referencia y condiciones">
+      <div class="rig">
+        <div class="machine-col">
+          <img
+            class="machine-img"
+            src="/machine.png?v=2"
+            alt="Esquema 2D de un torno con sensores numerados"
+            width="1400"
+            height="900"
+          />
+          <div class="units-note">
+            <span><code>K</code> temperatura en kelvin: escala absoluta.</span>
+            <span><code>rpm</code> revoluciones por minuto del husillo.</span>
+            <span><code>N·m</code> newton-metro: momento de fuerza aplicado sobre el eje.</span>
+            <span><code>min</code> minutos de uso acumulado de la herramienta.</span>
           </div>
         </div>
-      </section>
-    </main>
 
-    <script>
+        <div class="panel-col">
+          <form id="predict-form" class="card-container" novalidate>
+            <article class="input-card">
+              <div class="card-head">
+                <span class="badge">1</span>
+                <label for="air_temperature">
+                  Temperatura del aire
+                  <small>aire que rodea la máquina</small>
+                </label>
+              </div>
+              <div class="card-body">
+                <input id="air_temperature" name="air_temperature" type="number" step="0.1" inputmode="decimal" required value="298.5" />
+                <span class="unit">K</span>
+              </div>
+              <span class="range">rango 290–310 K</span>
+            </article>
+
+            <article class="input-card">
+              <div class="card-head">
+                <span class="badge">2</span>
+                <label for="process_temperature">
+                  Temperatura del proceso
+                  <small>motor del cabezal</small>
+                </label>
+              </div>
+              <div class="card-body">
+                <input id="process_temperature" name="process_temperature" type="number" step="0.1" inputmode="decimal" required value="308.5" />
+                <span class="unit">K</span>
+              </div>
+              <span class="range">rango 300–320 K</span>
+            </article>
+
+            <article class="input-card">
+              <div class="card-head">
+                <span class="badge">3</span>
+                <label for="rotational_speed">
+                  Velocidad de rotación
+                  <small>mandril del torno</small>
+                </label>
+              </div>
+              <div class="card-body">
+                <input id="rotational_speed" name="rotational_speed" type="number" step="1" inputmode="numeric" required value="1550" />
+                <span class="unit">rpm</span>
+              </div>
+              <span class="range">rango 1100–3000 rpm</span>
+            </article>
+
+            <article class="input-card">
+              <div class="card-head">
+                <span class="badge">4</span>
+                <label for="torque">
+                  Torque
+                  <small>husillo del torno</small>
+                </label>
+              </div>
+              <div class="card-body">
+                <input id="torque" name="torque" type="number" step="0.1" inputmode="decimal" required value="38" />
+                <span class="unit">N·m</span>
+              </div>
+              <span class="range">rango 0–90 N·m</span>
+            </article>
+
+            <article class="input-card">
+              <div class="card-head">
+                <span class="badge">5</span>
+                <label for="tool_wear">
+                  Desgaste de herramienta
+                  <small>cuchilla de corte</small>
+                </label>
+              </div>
+              <div class="card-body">
+                <input id="tool_wear" name="tool_wear" type="number" step="1" inputmode="numeric" required value="25" />
+                <span class="unit">min</span>
+              </div>
+              <span class="range">rango 0–260 min</span>
+            </article>
+          </form>
+
+          <div class="actions">
+            <button class="primary" id="analyze-btn" type="submit" form="predict-form">Analizar condiciones</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="loading" id="loading">Procesando con el sistema difuso…</div>
+    <div class="error" id="error" role="alert"></div>
+
+    <section class="result" id="result" aria-label="Resultado">
+      <h2>Resultado de la inspección</h2>
+
+      <div class="risk-row">
+        <div class="risk-score" id="risk-score">—<small> / 100</small></div>
+        <div class="risk-level" id="risk-level">—</div>
+      </div>
+
+      <div class="bar">
+        <div class="bar-fill" id="risk-bar"></div>
+      </div>
+
+      <div class="action">
+        <strong id="action-title">—</strong>
+        <span id="action-desc"></span>
+      </div>
+
+      <div class="factors">
+        <strong>Factores detectados</strong>
+        <ul id="factors-list"></ul>
+      </div>
+
+      <a class="toggle" href="/tecnico">Ver detalles de la inferencia en la vista técnica →</a>
+    </section>
+  </main>
+
+  <script>
+    document.addEventListener('astro:page-load', () => {
       const API_URL = 'http://localhost:8001/api/predict';
 
       const form = document.getElementById('predict-form') as HTMLFormElement;
@@ -340,8 +413,6 @@ import "@fontsource/geist-mono/400.css";
       const errorBox = document.getElementById('error') as HTMLElement;
       const result = document.getElementById('result') as HTMLElement;
       const analyzeBtn = document.getElementById('analyze-btn') as HTMLButtonElement;
-      const details = document.getElementById('details') as HTMLElement;
-      const toggleBtn = document.getElementById('toggle-details') as HTMLButtonElement;
 
       const LEVEL_COLORS: Record<string, string> = {
         bajo: '#3fb27f',
@@ -350,13 +421,44 @@ import "@fontsource/geist-mono/400.css";
         critico: '#d9503f',
       };
 
-      const INPUT_LABELS: Record<string, string> = {
-        process_temperature: 'Temperatura del proceso',
-        thermal_gap: 'Brecha térmica',
-        rotational_speed: 'Velocidad de rotación',
-        torque: 'Torque',
-        tool_wear: 'Desgaste de herramienta',
-      };
+      const INPUT_IDS = ['air_temperature', 'process_temperature', 'rotational_speed', 'torque', 'tool_wear'];
+      const INPUTS_KEY = 'mantenimiento_inputs';
+
+      function restoreInputs(): void {
+        try {
+          const raw = sessionStorage.getItem(INPUTS_KEY);
+          if (raw === null) return;
+          const saved = JSON.parse(raw) as Record<string, string>;
+          for (const id of INPUT_IDS) {
+            const el = document.getElementById(id) as HTMLInputElement;
+            if (el !== null && typeof saved[id] === 'string') {
+              el.value = saved[id];
+            }
+          }
+        } catch {
+          /* datos corruptos o sin soporte: se ignoran */
+        }
+      }
+
+      function saveInputs(): void {
+        try {
+          const values: Record<string, string> = {};
+          for (const id of INPUT_IDS) {
+            const el = document.getElementById(id) as HTMLInputElement;
+            if (el !== null) {
+              values[id] = el.value;
+            }
+          }
+          sessionStorage.setItem(INPUTS_KEY, JSON.stringify(values));
+        } catch {
+          /* sin soporte de sessionStorage: se ignora */
+        }
+      }
+
+      restoreInputs();
+      for (const id of INPUT_IDS) {
+        document.getElementById(id)?.addEventListener('input', saveInputs);
+      }
 
       interface RuleActivation {
         name: string;
@@ -384,70 +486,29 @@ import "@fontsource/geist-mono/400.css";
         errorBox.style.display = 'none';
       }
 
-      form.addEventListener('submit', async (event: Event) => {
-        event.preventDefault();
+      function hideErrorAndShowLoading(): void {
         hideError();
-
-        const payload: Record<string, number> = {};
-
-        for (const input of form.querySelectorAll<HTMLInputElement>('input')) {
-          const value = Number(input.value);
-          if (input.value.trim() === '' || Number.isNaN(value)) {
-            showError(`Complete el campo "${input.name}" con un valor numérico.`);
-            return;
-          }
-          payload[input.name] = value;
-        }
-
-        analyzeBtn.disabled = true;
         loading.style.display = 'block';
         result.style.display = 'none';
-        details.style.display = 'none';
-
-        try {
-          const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-
-          const body = (await response.json()) as PredictResponse & { detail?: unknown };
-
-          if (!response.ok) {
-            const message =
-              typeof body.detail === 'string' ? body.detail : 'El servidor rechazó los datos. Revise los valores.';
-            throw new Error(message);
-          }
-
-          renderResult(body);
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'No se pudo conectar con el backend.';
-          showError(message);
-        } finally {
-          analyzeBtn.disabled = false;
-          loading.style.display = 'none';
-        }
-      });
+        analyzeBtn.disabled = true;
+      }
 
       function renderResult(data: PredictResponse): void {
-        (document.getElementById('risk-score') as HTMLElement).innerHTML =
-          `${data.risk_score.toFixed(1)}<small> / 100</small>`;
-
+        const score = document.getElementById('risk-score') as HTMLElement;
         const level = document.getElementById('risk-level') as HTMLElement;
-        level.textContent = data.risk_level_display;
-        level.style.color = LEVEL_COLORS[data.risk_level] ?? 'var(--text)';
-
         const bar = document.getElementById('risk-bar') as HTMLElement;
-        bar.style.width = `${Math.min(data.risk_score, 100)}%`;
-        bar.style.background = LEVEL_COLORS[data.risk_level] ?? 'var(--accent)';
-
-        const action = document.getElementById('action-title') as HTMLElement;
-        action.textContent = data.action;
-
+        const actionTitle = document.getElementById('action-title') as HTMLElement;
         const actionDesc = document.getElementById('action-desc') as HTMLElement;
-        actionDesc.textContent = `Nivel de riesgo: ${data.risk_level_display}. El índice es la salida del sistema difuso.`;
-
         const factorsList = document.getElementById('factors-list') as HTMLElement;
+
+        score.childNodes[0].textContent = String(data.risk_score);
+        level.textContent = data.risk_level_display;
+        level.style.color = LEVEL_COLORS[data.risk_level] ?? '#e6ebf0';
+        bar.style.width = `${data.risk_score}%`;
+        bar.style.background = LEVEL_COLORS[data.risk_level] ?? '#e6ebf0';
+        actionTitle.textContent = data.action;
+        actionDesc.textContent = `Nivel ${data.risk_level_display.toLowerCase()} de riesgo de fallo predicho por el sistema difuso.`;
+
         factorsList.innerHTML = '';
         for (const factor of data.factors) {
           const item = document.createElement('li');
@@ -455,43 +516,49 @@ import "@fontsource/geist-mono/400.css";
           factorsList.appendChild(item);
         }
 
-        (document.getElementById('thermal-gap') as HTMLElement).textContent =
-          `${data.thermal_gap.toFixed(2)} K`;
-
-        const membershipsBody = document.getElementById('memberships-body') as HTMLElement;
-        membershipsBody.innerHTML = '';
-
-        for (const [variable, terms] of Object.entries(data.memberships)) {
-          const row = document.createElement('tr');
-          const name = document.createElement('td');
-          name.textContent = INPUT_LABELS[variable] ?? variable;
-          row.appendChild(name);
-
-          for (const term of ['low', 'medium', 'high']) {
-            const cell = document.createElement('td');
-            cell.textContent = terms[term].toFixed(2);
-            row.appendChild(cell);
-          }
-
-          membershipsBody.appendChild(row);
-        }
-
-        const rulesList = document.getElementById('rules-list') as HTMLElement;
-        rulesList.innerHTML = '';
-        for (const rule of data.activated_rules) {
-          const item = document.createElement('li');
-          item.textContent = `${rule.cause}  (fuerza ${rule.strength.toFixed(3)})`;
-          rulesList.appendChild(item);
-        }
-
         result.style.display = 'block';
+        result.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
 
-      toggleBtn.addEventListener('click', () => {
-        const visible = details.style.display === 'block';
-        details.style.display = visible ? 'none' : 'block';
-        toggleBtn.textContent = visible ? 'Ver detalles de la inferencia' : 'Ocultar detalles';
+      form.addEventListener('submit', async (event: Event) => {
+        event.preventDefault();
+        hideErrorAndShowLoading();
+
+        const values = {
+          air_temperature: Number((document.getElementById('air_temperature') as HTMLInputElement).value),
+          process_temperature: Number((document.getElementById('process_temperature') as HTMLInputElement).value),
+          rotational_speed: Number((document.getElementById('rotational_speed') as HTMLInputElement).value),
+          torque: Number((document.getElementById('torque') as HTMLInputElement).value),
+          tool_wear: Number((document.getElementById('tool_wear') as HTMLInputElement).value),
+        };
+
+        try {
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(values),
+          });
+
+          if (!response.ok) {
+            const body = await response.json().catch(() => null);
+            const detail =
+              body !== null && typeof body.detail === 'string' ? body.detail : `El servidor respondió ${response.status}.`;
+            throw new Error(detail);
+          }
+
+          const data = (await response.json()) as PredictResponse;
+          sessionStorage.setItem(
+            'mantenimiento_prediccion',
+            JSON.stringify({ values: values, response: data }),
+          );
+          renderResult(data);
+        } catch (err) {
+          showError(err instanceof Error ? err.message : 'Error inesperado.');
+        } finally {
+          loading.style.display = 'none';
+          analyzeBtn.disabled = false;
+        }
       });
-    </script>
-  </body>
-</html>
+    });
+  </script>
+</Base>

@@ -1,0 +1,415 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Vista técnica · Mantenimiento preventivo inteligente" activeTab="tecnica">
+  <style>
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .panel h2 {
+      margin: 0 0 18px;
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+
+    .summary {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 10px 24px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+    }
+
+    .summary .score {
+      font-family: 'Geist Mono', monospace;
+      font-size: 1.6rem;
+      font-weight: 500;
+    }
+
+    .summary .score small { font-size: 0.9rem; color: var(--muted); }
+
+    .summary .level { font-weight: 500; }
+
+    .summary .gap {
+      margin-left: auto;
+      color: var(--accent);
+      font-family: 'Geist Mono', monospace;
+    }
+
+    h3 {
+      margin: 20px 0 10px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    ul.rules {
+      margin: 8px 0 0;
+      padding-left: 20px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    ul.rules li { margin: 6px 0; }
+
+    ul.rules .cause { color: var(--text); }
+
+    ul.rules .strength {
+      font-family: 'Geist Mono', monospace;
+      color: var(--accent);
+    }
+
+    .empty {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty p { margin: 0 0 18px; }
+
+    .empty a, .back {
+      display: inline-block;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #06202e;
+      text-decoration: none;
+    }
+
+    .empty a:hover { opacity: 0.92; }
+
+    .back {
+      margin-top: 22px;
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .back:hover { color: var(--accent); border-color: var(--accent); }
+
+    #has-data { display: none; }
+  </style>
+
+  <style is:global>
+    /* Estilos de las tablas TanStack: el DOM se construye por JS en runtime y
+       no lleva data-astro-cid, por eso estas reglas deben ser globales. */
+    .gt {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--panel-2);
+    }
+
+    .gt-table {
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--text);
+      font-size: 0.92rem;
+    }
+
+    .gt-table thead th {
+      background: linear-gradient(180deg, #10161d, #0c1116);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.72rem;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .gt-table thead th.num {
+      font-family: 'Geist Mono', monospace;
+      text-align: right;
+      color: #9fb0bd;
+    }
+
+    .gt-table td {
+      padding: 11px 16px;
+      border-bottom: 1px solid rgba(38, 49, 59, 0.6);
+      transition: background 0.12s ease;
+    }
+
+    .gt-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .gt-table tbody tr:nth-child(even) td {
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .gt-table tbody tr:hover td {
+      background: rgba(76, 194, 255, 0.07);
+    }
+
+    .gt-table td.num {
+      font-family: 'Geist Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      color: #cfd9e2;
+    }
+
+    .gt-table td.gap {
+      font-family: 'Geist Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      color: var(--accent);
+    }
+  </style>
+
+  <main>
+    <section class="panel" id="has-data" aria-label="Detalles de la inferencia">
+      <h2>Análisis técnico de la inferencia</h2>
+
+      <div class="summary">
+        <span class="score" id="tech-risk">—<small> / 100</small></span>
+        <span class="level" id="tech-level">—</span>
+        <span class="gap">brecha térmica: <span id="tech-gap">—</span></span>
+      </div>
+
+      <h3>Condiciones evaluadas</h3>
+      <div id="values-grid"></div>
+
+      <h3>Membresías por variable</h3>
+      <div id="memberships-grid"></div>
+
+      <h3>Reglas activadas</h3>
+      <ul class="rules" id="rules-list"></ul>
+
+      <a class="back" href="/">← Volver a la vista de operación</a>
+    </section>
+
+    <section class="empty" id="empty-state">
+      <p>Todavía no se ha realizado ninguna inspección en esta sesión.</p>
+      <a href="/">Ir a la vista de operación</a>
+    </section>
+  </main>
+
+  <script>
+    import { createTable, getCoreRowModel, type ColumnDef } from '@tanstack/table-core';
+
+    interface HeaderLike {
+      id: string;
+      column: { id: string; columnDef: { header?: unknown } };
+    }
+
+    interface CellLike {
+      column: { id: string };
+      getValue: () => unknown;
+    }
+
+    interface TableLike {
+      getHeaderGroups: () => Array<{ headers: HeaderLike[] }>;
+      getRowModel: () => { rows: Array<{ getVisibleCells: () => CellLike[] }> };
+    }
+
+    function el(tag: string, className?: string, text?: string): HTMLElement {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function makeTable<T extends Record<string, string | number>>(
+      columns: ColumnDef<T, unknown>[],
+      data: T[],
+    ) {
+      const table = createTable<T>({
+        columns,
+        data,
+        getCoreRowModel: getCoreRowModel(),
+        state: {},
+        onStateChange: () => {},
+        renderFallbackValue: null,
+      });
+      // v8.21: createTable calcula initialState con los defaults de cada feature
+      // pero no lo fusiona en options.state (eso lo hace el adapter de React).
+      // En vanilla hay que mergearlo manualmente o getState() queda vacío.
+      table.setOptions((prev) => ({ ...prev, state: { ...table.initialState, ...prev.state } }));
+      return table;
+    }
+
+    function isNumColumn(id: string): boolean {
+      return id !== 'variable' && id !== 'unidad';
+    }
+
+    function renderTable(container: HTMLElement, table: TableLike, gapId: string | null): void {
+      container.innerHTML = '';
+      const wrap = el('div', 'gt');
+      const tbl = el('table', 'gt-table');
+      const thead = el('thead');
+      const headTr = el('tr');
+      for (const header of table.getHeaderGroups()[0].headers) {
+        headTr.appendChild(
+          el('th', isNumColumn(header.id) ? 'num' : undefined, String(header.column.columnDef.header ?? header.id)),
+        );
+      }
+      thead.appendChild(headTr);
+      tbl.appendChild(thead);
+
+      const tbody = el('tbody');
+      const rows = table.getRowModel().rows;
+      rows.forEach((row, index) => {
+        const tr = el('tr');
+        const isGap = gapId !== null && index === rows.length - 1;
+        for (const cell of row.getVisibleCells()) {
+          const cls = isGap && cell.column.id === gapId ? 'gap' : isNumColumn(cell.column.id) ? 'num' : undefined;
+          tr.appendChild(el('td', cls, String(cell.getValue() ?? '')));
+        }
+        tbody.appendChild(tr);
+      });
+      tbl.appendChild(tbody);
+      wrap.appendChild(tbl);
+      container.appendChild(wrap);
+    }
+
+    document.addEventListener('astro:page-load', () => {
+      const STORAGE_KEY = 'mantenimiento_prediccion';
+
+      interface RuleActivation {
+        name: string;
+        cause: string;
+        strength: number;
+      }
+
+      interface PredictResponse {
+        risk_score: number;
+        risk_level: string;
+        risk_level_display: string;
+        action: string;
+        thermal_gap: number;
+        factors: string[];
+        activated_rules: RuleActivation[];
+        memberships: Record<string, Record<string, number>>;
+      }
+
+      interface StoredPrediction {
+        values: Record<string, number>;
+        response: PredictResponse;
+      }
+
+      const LEVEL_COLORS: Record<string, string> = {
+        bajo: '#3fb27f',
+        moderado: '#e3b341',
+        alto: '#e07b39',
+        critico: '#d9503f',
+      };
+
+      const INPUT_LABELS: Record<string, string> = {
+        process_temperature: 'Temperatura del proceso',
+        thermal_gap: 'Brecha térmica',
+        rotational_speed: 'Velocidad de rotación',
+        torque: 'Torque',
+        tool_wear: 'Desgaste de herramienta',
+      };
+
+      const hasData = document.getElementById('has-data') as HTMLElement;
+      const emptyState = document.getElementById('empty-state') as HTMLElement;
+
+      function showEmpty(): void {
+        hasData.style.display = 'none';
+        emptyState.style.display = 'block';
+      }
+
+      function render(prediction: StoredPrediction): void {
+        const data = prediction.response;
+
+        const risk = document.getElementById('tech-risk') as HTMLElement;
+        const level = document.getElementById('tech-level') as HTMLElement;
+        const gap = document.getElementById('tech-gap') as HTMLElement;
+
+        risk.childNodes[0].textContent = String(data.risk_score);
+        level.textContent = data.risk_level_display;
+        level.style.color = LEVEL_COLORS[data.risk_level] ?? '#e6ebf0';
+        gap.textContent = `${data.thermal_gap} K`;
+
+        const values = prediction.values;
+
+        const valuesRows = [
+          { variable: 'Temperatura del aire', valor: String(values.air_temperature), unidad: 'K' },
+          { variable: 'Temperatura del proceso', valor: String(values.process_temperature), unidad: 'K' },
+          { variable: 'Velocidad de rotación', valor: String(values.rotational_speed), unidad: 'rpm' },
+          { variable: 'Torque', valor: String(values.torque), unidad: 'N·m' },
+          { variable: 'Desgaste de herramienta', valor: String(values.tool_wear), unidad: 'min' },
+          { variable: 'Brecha térmica (process − air)', valor: `${data.thermal_gap} K`, unidad: 'calculado' },
+        ];
+        const valueColumns: ColumnDef<typeof valuesRows[number], unknown>[] = [
+          { id: 'variable', accessorKey: 'variable', header: 'Variable' },
+          { id: 'valor', accessorKey: 'valor', header: 'Valor' },
+          { id: 'unidad', accessorKey: 'unidad', header: 'Unidad' },
+        ];
+        renderTable(document.getElementById('values-grid') as HTMLElement, makeTable(valueColumns, valuesRows), 'valor');
+
+        const membershipRows = Object.entries(data.memberships).map(([variable, terms]) => ({
+          variable: INPUT_LABELS[variable] ?? variable,
+          low: terms.low.toFixed(2),
+          medium: terms.medium.toFixed(2),
+          high: terms.high.toFixed(2),
+        }));
+        const membershipColumns: ColumnDef<typeof membershipRows[number], unknown>[] = [
+          { id: 'variable', accessorKey: 'variable', header: 'Variable' },
+          { id: 'low', accessorKey: 'low', header: 'BAJO' },
+          { id: 'medium', accessorKey: 'medium', header: 'MEDIO' },
+          { id: 'high', accessorKey: 'high', header: 'ALTO' },
+        ];
+        renderTable(
+          document.getElementById('memberships-grid') as HTMLElement,
+          makeTable(membershipColumns, membershipRows),
+          null,
+        );
+
+        const rulesList = document.getElementById('rules-list') as HTMLElement;
+        rulesList.innerHTML = '';
+        for (const rule of data.activated_rules) {
+          const item = document.createElement('li');
+          const cause = document.createElement('span');
+          cause.className = 'cause';
+          cause.textContent = rule.cause;
+          const strength = document.createElement('span');
+          strength.className = 'strength';
+          strength.textContent = `  · fuerza ${rule.strength.toFixed(3)}`;
+          item.appendChild(cause);
+          item.appendChild(strength);
+          rulesList.appendChild(item);
+        }
+
+        emptyState.style.display = 'none';
+        hasData.style.display = 'block';
+      }
+
+      try {
+        const raw = sessionStorage.getItem(STORAGE_KEY);
+        if (raw === null) {
+          showEmpty();
+        } else {
+          render(JSON.parse(raw) as StoredPrediction);
+        }
+      } catch {
+        showEmpty();
+      }
+    });
+  </script>
+</Base>
