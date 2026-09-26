@@ -43,6 +43,9 @@ class RuleActivation(BaseModel):
     name: str
     cause: str
     strength: float = Field(ge=0.0, le=1.0)
+    antecedents: list[tuple[str, str]] = Field(default_factory=list)
+    consequent: str = ""
+    consequent_display: str = ""
 
 
 class PredictionResponse(BaseModel):

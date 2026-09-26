@@ -88,3 +88,11 @@ def predict(payload: PredictionInput) -> PredictionResponse:
         raise HTTPException(status_code=503, detail=MISSING_PARAMS_MESSAGE)
 
     return model.predict(payload)
+
+
+@app.get("/api/memberships")
+def memberships() -> dict[str, object]:
+    if model is None:
+        raise HTTPException(status_code=503, detail=MISSING_PARAMS_MESSAGE)
+
+    return model.system.memberships_info()

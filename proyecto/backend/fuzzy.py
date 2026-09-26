@@ -32,6 +32,24 @@ from config import (
 
 FloatArray = NDArray[np.float64]
 
+TERM_LABELS_ES: dict[str, str] = {"low": "Baja", "medium": "Media", "high": "Alta"}
+RISK_TERM_LABELS_ES: dict[str, str] = {
+    "low": "Riesgo bajo",
+    "medium": "Riesgo medio",
+    "high": "Riesgo alto",
+    "critical": "Riesgo crítico",
+}
+UPPER_RISK_TERM_LABELS_ES: dict[str, str] = {
+    "low": "BAJO",
+    "medium": "MEDIO",
+    "high": "ALTO",
+    "critical": "CRÍTICO",
+}
+SHAPE_LABELS_ES: dict[str, str] = {
+    "trapezoidal": "Trapezoidal",
+    "triangular": "Triangular",
+}
+
 
 def _sim_state(property_value: object) -> StatePerSimulation:
     return cast(StatePerSimulation, property_value)
@@ -152,6 +170,72 @@ class FuzzySystem:
                 cast(tuple[tuple[str, str], ...], entry["antecedents"])
             )
 
+    def _membership_points(
+        self,
+        variable: str,
+        term: str,
+        parameters: dict[str, dict[str, float]],
+    ) -> tuple[str, tuple[float, ...]]:
+        spec: VariableSpec = VARIABLE_SPECS[variable]
+        cut: dict[str, float] = parameters[variable]
+
+        if term == "low":
+            return "trapezoidal", (spec["min"], spec["min"], cut["p1"], cut["p2"])
+        if term == "medium":
+            return "triangular", (cut["p1"], cut["p2"], cut["p3"])
+        return "trapezoidal", (cut["p2"], cut["p3"], spec["max"], spec["max"])
+
+    def memberships_info(self) -> dict[str, object]:
+        """Describe las funciones de pertenencia: originales (DEFAULT_PARAMETERS)
+        y optimizadas (self.parameters, cargadas por el modelo al iniciar)."""
+        optimized: dict[str, dict[str, float]] = cast(
+            dict[str, dict[str, float]], self.parameters
+        )
+
+        variables: dict[str, object] = {}
+
+        for variable in FUZZY_VARIABLES:
+            spec: VariableSpec = VARIABLE_SPECS[variable]
+            terms: dict[str, object] = {}
+
+            for term in TERMS:
+                shape, original_points = self._membership_points(
+                    variable, term, DEFAULT_PARAMETERS
+                )
+                _, optimized_points = self._membership_points(
+                    variable, term, optimized
+                )
+
+                terms[term] = {
+                    "display": TERM_LABELS_ES[term],
+                    "shape": SHAPE_LABELS_ES[shape],
+                    "original": [round(float(value), 2) for value in original_points],
+                    "optimized": [round(float(value), 2) for value in optimized_points],
+                }
+
+            variables[variable] = {
+                "display": spec["display"],
+                "unit": spec["unit"],
+                "min": spec["min"],
+                "max": spec["max"],
+                "terms": terms,
+            }
+
+        risk_terms: dict[str, object] = {}
+
+        for term, points in OUTPUT_MEMBERSHIPS.items():
+            shape: str = "trapezoidal" if len(points) == 4 else "triangular"
+            risk_terms[term] = {
+                "display": RISK_TERM_LABELS_ES.get(term, term),
+                "shape": SHAPE_LABELS_ES[shape],
+                "points": [round(float(value), 2) for value in points],
+            }
+
+        return {
+            "risk": {"min": RISK_MIN, "max": RISK_MAX, "terms": risk_terms},
+            "variables": variables,
+        }
+
     def _build_rule(self, entry: dict[str, object]) -> Rule:
         antecedents: list[tuple[str, str]] = cast(
             list[tuple[str, str]], entry["antecedents"]
@@ -242,10 +326,13 @@ class FuzzySystem:
             strength: float = _sim_float(rule.aggregate_firing, simulation)
 
             if strength > 0.0:
+                consequent_label: str = str(rule.consequent[0].term.label)
                 activated_rules.append(
                     {
                         "name": rule.label,
                         "antecedents": self._rule_antecedents[str(rule.label)],
+                        "consequent": consequent_label,
+                        "consequent_display": UPPER_RISK_TERM_LABELS_ES.get(consequent_label, consequent_label),
                         "strength": round(strength, 3),
                     }
                 )

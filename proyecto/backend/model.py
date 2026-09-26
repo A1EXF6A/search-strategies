@@ -107,6 +107,9 @@ class MaintenanceModel:
                     name=rule_name,
                     cause=RULE_LABELS.get(rule_name, DEFAULT_RULE_LABEL),
                     strength=float(cast(float, rule["strength"])),
+                    antecedents=cast(list[tuple[str, str]], rule["antecedents"]),
+                    consequent=str(rule["consequent"]),
+                    consequent_display=str(rule["consequent_display"]),
                 )
             )
 

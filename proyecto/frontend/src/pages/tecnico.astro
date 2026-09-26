@@ -47,7 +47,7 @@ import Base from "../layouts/Base.astro";
 
     .summary .gap {
       margin-left: auto;
-      color: var(--accent);
+      color: var(--accent-ink);
       font-family: 'Geist Mono', monospace;
     }
 
@@ -56,22 +56,6 @@ import Base from "../layouts/Base.astro";
       font-size: 0.95rem;
       font-weight: 500;
       color: var(--text);
-    }
-
-    ul.rules {
-      margin: 8px 0 0;
-      padding-left: 20px;
-      font-size: 0.9rem;
-      color: var(--muted);
-    }
-
-    ul.rules li { margin: 6px 0; }
-
-    ul.rules .cause { color: var(--text); }
-
-    ul.rules .strength {
-      font-family: 'Geist Mono', monospace;
-      color: var(--accent);
     }
 
     .empty {
@@ -93,7 +77,7 @@ import Base from "../layouts/Base.astro";
       padding: 10px 18px;
       font-size: 0.95rem;
       font-weight: 500;
-      color: #06202e;
+      color: var(--on-accent);
       text-decoration: none;
     }
 
@@ -106,7 +90,67 @@ import Base from "../layouts/Base.astro";
       border: 1px solid var(--border);
     }
 
-    .back:hover { color: var(--accent); border-color: var(--accent); }
+    .back:hover { color: var(--accent-ink); border-color: var(--accent-ink); }
+
+    .mf-note {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+
+    .mf-block {
+      margin-bottom: 26px;
+    }
+
+    .mf-block:last-child {
+      margin-bottom: 0;
+    }
+
+    .mf-block-title {
+      margin: 0 0 8px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .mf-block-title .mf-unit {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    .mf-block-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) {
+      .mf-block-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .mf-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px 10px;
+    }
+
+    .mf-chart-box {
+      position: relative;
+      height: 210px;
+      width: 100%;
+    }
+
+    .mf-chart-box canvas {
+      position: absolute;
+      inset: 0;
+      width: 100% !important;
+      height: 100% !important;
+    }
 
     #has-data { display: none; }
   </style>
@@ -129,7 +173,7 @@ import Base from "../layouts/Base.astro";
     }
 
     .gt-table thead th {
-      background: linear-gradient(180deg, #10161d, #0c1116);
+      background: linear-gradient(180deg, #282828, #222222);
       color: var(--muted);
       font-weight: 600;
       font-size: 0.72rem;
@@ -144,12 +188,12 @@ import Base from "../layouts/Base.astro";
     .gt-table thead th.num {
       font-family: 'Geist Mono', monospace;
       text-align: right;
-      color: #9fb0bd;
+      color: var(--accent-ink);
     }
 
     .gt-table td {
       padding: 11px 16px;
-      border-bottom: 1px solid rgba(38, 49, 59, 0.6);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
       transition: background 0.12s ease;
     }
 
@@ -158,25 +202,76 @@ import Base from "../layouts/Base.astro";
     }
 
     .gt-table tbody tr:nth-child(even) td {
-      background: rgba(255, 255, 255, 0.025);
+      background: rgba(255, 255, 255, 0.035);
     }
 
     .gt-table tbody tr:hover td {
-      background: rgba(76, 194, 255, 0.07);
+      background: rgba(194, 194, 194, 0.12);
     }
 
     .gt-table td.num {
       font-family: 'Geist Mono', monospace;
       font-variant-numeric: tabular-nums;
       text-align: right;
-      color: #cfd9e2;
+      white-space: nowrap;
+      color: #dcdcdc;
     }
 
     .gt-table td.gap {
       font-family: 'Geist Mono', monospace;
       font-variant-numeric: tabular-nums;
       text-align: right;
-      color: var(--accent);
+      color: var(--accent-ink);
+      background: rgba(194, 194, 194, 0.16);
+    }
+
+    .gt-table tr.dom td {
+      background: rgba(194, 194, 194, 0.13);
+    }
+
+    .dominant {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--bg);
+      border: 1px solid var(--accent-ink);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+    }
+
+    .dominant .dom-label {
+      color: var(--accent-ink);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .dominant .dom-row {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+
+    .dominant .dom-k {
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      min-width: 130px;
+    }
+
+    .dominant .dom-v {
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+
+    .dominant .dom-v.mono {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.82rem;
+      overflow-wrap: anywhere;
     }
   </style>
 
@@ -196,8 +291,14 @@ import Base from "../layouts/Base.astro";
       <h3>Membresías por variable</h3>
       <div id="memberships-grid"></div>
 
+      <h3>Funciones de pertenencia por variable</h3>
+      <p class="mf-note" id="mf-note">—</p>
+      <div id="membership-sections"></div>
+
       <h3>Reglas activadas</h3>
-      <ul class="rules" id="rules-list"></ul>
+      <div class="dominant" id="dominant-rule" style="display:none"></div>
+      <p class="mf-note" id="refresh-note" style="display:none"></p>
+      <div id="reglas-grid"></div>
 
       <a class="back" href="/">← Volver a la vista de operación</a>
     </section>
@@ -210,6 +311,8 @@ import Base from "../layouts/Base.astro";
 
   <script>
     import { createTable, getCoreRowModel, type ColumnDef } from '@tanstack/table-core';
+    import Chart from 'chart.js/auto';
+    import type { ChartConfiguration, ChartDataset, LinearScale, Plugin } from 'chart.js';
 
     interface HeaderLike {
       id: string;
@@ -252,11 +355,14 @@ import Base from "../layouts/Base.astro";
       return table;
     }
 
-    function isNumColumn(id: string): boolean {
-      return id !== 'variable' && id !== 'unidad';
-    }
-
-    function renderTable(container: HTMLElement, table: TableLike, gapId: string | null): void {
+    function renderTable(
+      container: HTMLElement,
+      table: TableLike,
+      gapId: string | null,
+      plainColumns: string[] = ['variable', 'unidad'],
+      highlightRow?: (index: number) => boolean,
+    ): void {
+      const isNum = (id: string): boolean => !plainColumns.includes(id);
       container.innerHTML = '';
       const wrap = el('div', 'gt');
       const tbl = el('table', 'gt-table');
@@ -264,7 +370,7 @@ import Base from "../layouts/Base.astro";
       const headTr = el('tr');
       for (const header of table.getHeaderGroups()[0].headers) {
         headTr.appendChild(
-          el('th', isNumColumn(header.id) ? 'num' : undefined, String(header.column.columnDef.header ?? header.id)),
+          el('th', isNum(header.id) ? 'num' : undefined, String(header.column.columnDef.header ?? header.id)),
         );
       }
       thead.appendChild(headTr);
@@ -274,9 +380,10 @@ import Base from "../layouts/Base.astro";
       const rows = table.getRowModel().rows;
       rows.forEach((row, index) => {
         const tr = el('tr');
+        if (highlightRow !== undefined && highlightRow(index)) tr.className = 'dom';
         const isGap = gapId !== null && index === rows.length - 1;
         for (const cell of row.getVisibleCells()) {
-          const cls = isGap && cell.column.id === gapId ? 'gap' : isNumColumn(cell.column.id) ? 'num' : undefined;
+          const cls = isGap && cell.column.id === gapId ? 'gap' : isNum(cell.column.id) ? 'num' : undefined;
           tr.appendChild(el('td', cls, String(cell.getValue() ?? '')));
         }
         tbody.appendChild(tr);
@@ -286,36 +393,379 @@ import Base from "../layouts/Base.astro";
       container.appendChild(wrap);
     }
 
+    interface RuleActivation {
+      name: string;
+      cause: string;
+      strength: number;
+      antecedents: Array<[string, string]>;
+      consequent: string;
+      consequent_display: string;
+    }
+
+    interface PredictResponse {
+      risk_score: number;
+      risk_level: string;
+      risk_level_display: string;
+      action: string;
+      thermal_gap: number;
+      factors: string[];
+      activated_rules: RuleActivation[];
+      memberships: Record<string, Record<string, number>>;
+    }
+
+    interface StoredPrediction {
+      values: Record<string, number>;
+      response: PredictResponse;
+    }
+
+    interface MembershipTerm {
+      display: string;
+      shape: string;
+      original: number[];
+      optimized: number[];
+    }
+
+    interface MembershipVariable {
+      display: string;
+      unit: string;
+      min: number;
+      max: number;
+      terms: Record<string, MembershipTerm>;
+    }
+
+    interface RiskTerm {
+      display: string;
+      shape: string;
+      points: number[];
+    }
+
+    interface MembershipsPayload {
+      risk: { min: number; max: number; terms: Record<string, RiskTerm> };
+      variables: Record<string, MembershipVariable>;
+    }
+
+    interface ChartTerm {
+      display: string;
+      color: string;
+      points: number[];
+      original: number[] | null;
+    }
+
+    const TERM_COLORS: Record<string, string> = {
+      low: '#4da6ff',
+      medium: '#ffb54d',
+      high: '#ff6b6b',
+    };
+
+    const RISK_COLORS: Record<string, string> = {
+      low: '#51cf66',
+      medium: '#ffd43b',
+      high: '#ff922b',
+      critical: '#ff6b6b',
+    };
+
+    interface CurvePoint {
+      x: number;
+      y: number;
+    }
+
+    type CurveChart = Chart<'line', CurvePoint[], number>;
+
+    let memberCharts: CurveChart[] = [];
+
+    function buildCurve(min: number, max: number, points: number[]): CurvePoint[] {
+      const fn = points.length === 4 ? trap : tri;
+      const out: CurvePoint[] = [];
+      const steps = 80;
+      for (let i = 0; i <= steps; i++) {
+        const x = min + ((max - min) * i) / steps;
+        out.push({ x, y: fn(x, points) });
+      }
+      return out;
+    }
+
+    function withAlpha(hex: string, alpha: number): string {
+      const value = hex.replace('#', '');
+      const r = parseInt(value.slice(0, 2), 16);
+      const g = parseInt(value.slice(2, 4), 16);
+      const b = parseInt(value.slice(4, 6), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function valueMarkerPlugin(marker: number): Plugin<'line'> {
+      return {
+        id: 'valueMarker',
+        afterDatasetsDraw(chart) {
+          if (marker === null) return;
+          const xScale = chart.scales.x as LinearScale;
+          const yScale = chart.scales.y as LinearScale;
+          const x = xScale.getPixelForValue(marker);
+          const ctx = chart.ctx;
+          ctx.save();
+          ctx.beginPath();
+          ctx.setLineDash([5, 5]);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.lineWidth = 1.6;
+          ctx.moveTo(x, yScale.top);
+          ctx.lineTo(x, yScale.bottom);
+          ctx.stroke();
+          ctx.restore();
+        },
+      };
+    }
+
+    function createMembershipChart(
+      canvas: HTMLCanvasElement,
+      terms: ChartTerm[],
+      min: number,
+      max: number,
+      marker: number | null,
+    ): CurveChart {
+      const datasets: ChartDataset<'line', CurvePoint[]>[] = terms.flatMap((term) => {
+        const optimized: ChartDataset<'line', CurvePoint[]> = {
+          label: term.display,
+          data: buildCurve(min, max, term.points),
+          borderColor: term.color,
+          backgroundColor: withAlpha(term.color, 0.12),
+          borderWidth: 2.5,
+          pointRadius: 0,
+          tension: 0,
+          fill: true,
+        };
+        const layered: ChartDataset<'line', CurvePoint[]>[] = [optimized];
+        if (term.original) {
+          layered.push({
+            label: `${term.display} · original`,
+            data: buildCurve(min, max, term.original),
+            borderColor: term.color,
+            borderWidth: 1.5,
+            borderDash: [6, 5],
+            pointRadius: 0,
+            tension: 0,
+            fill: false,
+          });
+        }
+        return layered;
+      });
+
+      const plugins: Plugin<'line'>[] = marker === null ? [] : [valueMarkerPlugin(marker)];
+
+      const config: ChartConfiguration<'line', CurvePoint[], number> = {
+        type: 'line',
+        data: { datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'nearest', intersect: false },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#9a9a9a',
+                boxWidth: 14,
+                boxHeight: 8,
+                padding: 14,
+                font: { size: 10 },
+                filter: (item: { text: string }) => !item.text.endsWith(' · original'),
+              },
+            },
+            tooltip: {
+              backgroundColor: 'rgba(34, 34, 34, 0.95)',
+              borderColor: '#3a3a3a',
+              borderWidth: 1,
+              titleColor: '#e6e6e6',
+              bodyColor: '#d0d0d0',
+            },
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              min,
+              max,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              border: { color: '#3a3a3a' },
+              ticks: {
+                color: '#9a9a9a',
+                font: { family: "'Geist Mono', monospace", size: 10 },
+                maxTicksLimit: 6,
+                padding: 6,
+              },
+            },
+            y: {
+              min: 0,
+              max: 1,
+              ticks: {
+                stepSize: 0.25,
+                color: '#9a9a9a',
+                font: { family: "'Geist Mono', monospace", size: 10 },
+                padding: 6,
+              },
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              border: { color: '#3a3a3a' },
+            },
+          },
+        },
+        plugins,
+      };
+
+      const chart = new Chart(canvas, config);
+      memberCharts.push(chart);
+      return chart;
+    }
+
+    function trap(x: number, p: number[]): number {
+      const [a, b, c, d] = p;
+      if (x <= a || x >= d) return 0;
+      if (x >= b && x <= c) return 1;
+      if (x > a && x < b) return (x - a) / (b - a);
+      return (d - x) / (d - c);
+    }
+
+    function tri(x: number, p: number[]): number {
+      const [a, b, c] = p;
+      if (x <= a || x >= c) return 0;
+      if (x < b) return (x - a) / (b - a);
+      return (c - x) / (c - b);
+    }
+
+    function fuzzyCurrentValue(key: string, values: Record<string, number> | null): number | null {
+      if (values === null) return null;
+      if (key === 'thermal_gap') {
+        const t = values.process_temperature;
+        const a = values.air_temperature;
+        if (typeof t !== 'number' || typeof a !== 'number') return null;
+        return Math.round((t - a) * 100) / 100;
+      }
+      const v = values[key];
+      return typeof v === 'number' ? v : null;
+    }
+
+    function renderMemberships(payload: MembershipsPayload, prediction: StoredPrediction | null): void {
+      const container = document.getElementById('membership-sections') as HTMLElement;
+      container.innerHTML = '';
+      for (const chart of memberCharts) chart.destroy();
+      memberCharts.length = 0;
+      const values = prediction ? prediction.values : null;
+
+      const paramsColumns: ColumnDef<Record<string, string>, unknown>[] = [
+        { id: 'categoria', accessorKey: 'categoria', header: 'Categoría' },
+        { id: 'forma', accessorKey: 'forma', header: 'Forma' },
+        { id: 'original', accessorKey: 'original', header: 'Parámetros originales' },
+        { id: 'optimizado', accessorKey: 'optimizado', header: 'Parámetros optimizados' },
+      ];
+
+      for (const key of Object.keys(payload.variables)) {
+        const info = payload.variables[key];
+
+        const terms: ChartTerm[] = Object.entries(info.terms).map(([termKey, term]) => ({
+          display: term.display,
+          color: TERM_COLORS[termKey] ?? '#bdbdbd',
+          points: term.optimized,
+          original: term.original,
+        }));
+
+        const rows: Array<Record<string, string>> = [];
+        for (const termKey of Object.keys(info.terms)) {
+          const term = info.terms[termKey];
+          rows.push({
+            categoria: term.display,
+            forma: term.shape,
+            original: term.original.map((v) => v.toFixed(2)).join(', '),
+            optimizado: term.optimized.map((v) => v.toFixed(2)).join(', '),
+          });
+        }
+
+        const block = document.createElement('section');
+        block.className = 'mf-block';
+        const title = document.createElement('h4');
+        title.className = 'mf-block-title';
+        title.innerHTML = `${info.display} <span class="mf-unit">(${info.unit})</span>`;
+        block.appendChild(title);
+
+        const gridEl = document.createElement('div');
+        gridEl.className = 'mf-block-grid';
+        const chartWrap = document.createElement('div');
+        chartWrap.className = 'mf-card';
+        const chartBox = document.createElement('div');
+        chartBox.className = 'mf-chart-box';
+        const canvas = document.createElement('canvas');
+        chartBox.appendChild(canvas);
+        chartWrap.appendChild(chartBox);
+        createMembershipChart(
+          canvas,
+          terms,
+          info.min,
+          info.max,
+          fuzzyCurrentValue(key, values),
+        );
+        const tableWrap = document.createElement('div');
+        renderTable(tableWrap, makeTable(paramsColumns, rows), null, ['categoria', 'forma']);
+        gridEl.appendChild(chartWrap);
+        gridEl.appendChild(tableWrap);
+        block.appendChild(gridEl);
+        container.appendChild(block);
+      }
+
+      const riskTerms: ChartTerm[] = Object.entries(payload.risk.terms).map(([termKey, term]) => ({
+        display: term.display,
+        color: RISK_COLORS[termKey] ?? '#d4d4d4',
+        points: term.points,
+        original: null,
+      }));
+
+      const riskBlock = document.createElement('section');
+      riskBlock.className = 'mf-block';
+      const riskTitle = document.createElement('h4');
+      riskTitle.className = 'mf-block-title';
+      riskTitle.textContent = 'Riesgo de fallo (salida)';
+      riskBlock.appendChild(riskTitle);
+      const riskWrap = document.createElement('div');
+      riskWrap.className = 'mf-card';
+      const riskBox = document.createElement('div');
+      riskBox.className = 'mf-chart-box';
+      const riskCanvas = document.createElement('canvas');
+      riskBox.appendChild(riskCanvas);
+      riskWrap.appendChild(riskBox);
+      createMembershipChart(
+        riskCanvas,
+        riskTerms,
+        payload.risk.min,
+        payload.risk.max,
+        prediction ? prediction.response.risk_score : null,
+      );
+      riskBlock.appendChild(riskWrap);
+      container.appendChild(riskBlock);
+    }
+
+    async function loadMemberships(prediction: StoredPrediction | null): Promise<void> {
+      const note = document.getElementById('mf-note') as HTMLElement;
+      try {
+        const response = await fetch('http://localhost:8001/api/memberships');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const payload = (await response.json()) as MembershipsPayload;
+        note.textContent =
+          'Sólido: parámetros optimizados por el GA · Punteado: originales (por defecto). La línea vertical marca el valor de la inspección.';
+        renderMemberships(payload, prediction);
+      } catch {
+        note.textContent = 'No se pudieron cargar las funciones de pertenencia (API no disponible).';
+      }
+    }
+
     document.addEventListener('astro:page-load', () => {
       const STORAGE_KEY = 'mantenimiento_prediccion';
 
-      interface RuleActivation {
-        name: string;
-        cause: string;
-        strength: number;
-      }
-
-      interface PredictResponse {
-        risk_score: number;
-        risk_level: string;
-        risk_level_display: string;
-        action: string;
-        thermal_gap: number;
-        factors: string[];
-        activated_rules: RuleActivation[];
-        memberships: Record<string, Record<string, number>>;
-      }
-
-      interface StoredPrediction {
-        values: Record<string, number>;
-        response: PredictResponse;
-      }
-
       const LEVEL_COLORS: Record<string, string> = {
-        bajo: '#3fb27f',
-        moderado: '#e3b341',
-        alto: '#e07b39',
-        critico: '#d9503f',
+        bajo: '#51cf66',
+        moderado: '#ffb54d',
+        alto: '#ff922b',
+        critico: '#ff6b6b',
+      };
+
+      const LEVEL_TEXT: Record<string, string> = {
+        bajo: '#1a1a1a',
+        moderado: '#1a1a1a',
+        alto: '#1a1a1a',
+        critico: '#1a1a1a',
       };
 
       const INPUT_LABELS: Record<string, string> = {
@@ -325,6 +775,55 @@ import Base from "../layouts/Base.astro";
         torque: 'Torque',
         tool_wear: 'Desgaste de herramienta',
       };
+
+      const TERM_DISPLAY: Record<string, string> = {
+        low: 'Baja',
+        medium: 'Media',
+        high: 'Alta',
+      };
+
+      const OUTPUT_TERM_DISPLAY: Record<string, string> = {
+        low: 'Bajo',
+        medium: 'Medio',
+        high: 'Alto',
+        critical: 'Crítico',
+      };
+
+      const OUTPUT_PHRASE_DISPLAY: Record<string, string> = {
+        low: 'Riesgo bajo',
+        medium: 'Riesgo medio',
+        high: 'Riesgo alto',
+        critical: 'Riesgo crítico',
+      };
+
+      function formatAntecedents(antecedents: Array<[string, string]>): string {
+        return antecedents
+          .map(([variable, term]) => `[${INPUT_LABELS[variable] ?? variable} = ${TERM_DISPLAY[term] ?? term}]`)
+          .join(' Y ');
+      }
+
+      function formatRule(rule: RuleActivation): string {
+        if (rule.antecedents !== undefined && rule.antecedents.length > 0) {
+          const out =
+            rule.consequent_display ||
+            (rule.consequent ? (OUTPUT_TERM_DISPLAY[rule.consequent] ?? rule.consequent.toUpperCase()) : '—');
+          return `SI ${formatAntecedents(rule.antecedents)} ENTONCES [Riesgo = ${out}]`;
+        }
+        return rule.cause;
+      }
+
+      function outputPhrase(consequent: string | undefined, display: string | undefined): string {
+        if (display) return display;
+        if (!consequent) return '—';
+        return OUTPUT_PHRASE_DISPLAY[consequent] ?? consequent.toUpperCase();
+      }
+
+      function domRow(kind: string, value: string, mono = false): HTMLElement {
+        const row = el('div', 'dom-row');
+        row.appendChild(el('span', 'dom-k', kind));
+        row.appendChild(el('span', mono ? 'dom-v mono' : 'dom-v', value));
+        return row;
+      }
 
       const hasData = document.getElementById('has-data') as HTMLElement;
       const emptyState = document.getElementById('empty-state') as HTMLElement;
@@ -343,7 +842,11 @@ import Base from "../layouts/Base.astro";
 
         risk.childNodes[0].textContent = String(data.risk_score);
         level.textContent = data.risk_level_display;
-        level.style.color = LEVEL_COLORS[data.risk_level] ?? '#e6ebf0';
+        const tone = LEVEL_COLORS[data.risk_level] ?? '#5c5c5c';
+        level.style.background = tone;
+        level.style.color = LEVEL_TEXT[data.risk_level] ?? '#efefef';
+        level.style.padding = '3px 12px';
+        level.style.borderRadius = '999px';
         gap.textContent = `${data.thermal_gap} K`;
 
         const values = prediction.values;
@@ -381,23 +884,89 @@ import Base from "../layouts/Base.astro";
           null,
         );
 
-        const rulesList = document.getElementById('rules-list') as HTMLElement;
-        rulesList.innerHTML = '';
-        for (const rule of data.activated_rules) {
-          const item = document.createElement('li');
-          const cause = document.createElement('span');
-          cause.className = 'cause';
-          cause.textContent = rule.cause;
-          const strength = document.createElement('span');
-          strength.className = 'strength';
-          strength.textContent = `  · fuerza ${rule.strength.toFixed(3)}`;
-          item.appendChild(cause);
-          item.appendChild(strength);
-          rulesList.appendChild(item);
+        const rules = [...data.activated_rules].sort((a, b) => b.strength - a.strength);
+
+        const dominantEl = document.getElementById('dominant-rule') as HTMLElement;
+        dominantEl.innerHTML = '';
+        if (rules.length > 0) {
+          const dominant = rules[0];
+          dominantEl.style.display = 'flex';
+          dominantEl.appendChild(el('span', 'dom-label', 'Regla dominante'));
+          dominantEl.appendChild(domRow('Nombre', dominant.name, true));
+          dominantEl.appendChild(domRow('Representación', formatRule(dominant)));
+          dominantEl.appendChild(domRow('Salida lingüística', outputPhrase(dominant.consequent, dominant.consequent_display)));
+        } else {
+          dominantEl.style.display = 'none';
         }
+
+        const ruleRows: Array<Record<string, string>> = rules.map((rule, index) => ({
+          regla: `${index === 0 ? '★ ' : ''}${rule.name.split('_')[0]}`,
+          representacion: formatRule(rule),
+          salida: outputPhrase(rule.consequent, rule.consequent_display),
+          fuerza: rule.strength.toFixed(3),
+        }));
+        const ruleColumns: ColumnDef<(typeof ruleRows)[number], unknown>[] = [
+          { id: 'regla', accessorKey: 'regla', header: 'Regla' },
+          { id: 'representacion', accessorKey: 'representacion', header: 'Representación' },
+          { id: 'salida', accessorKey: 'salida', header: 'Salida lingüística' },
+          { id: 'fuerza', accessorKey: 'fuerza', header: 'Fuerza' },
+        ];
+        renderTable(
+          document.getElementById('reglas-grid') as HTMLElement,
+          makeTable(ruleColumns, ruleRows),
+          null,
+          ['regla', 'representacion', 'salida'],
+          (index) => index === 0,
+        );
 
         emptyState.style.display = 'none';
         hasData.style.display = 'block';
+      }
+
+      function refreshStoredPrediction(current: StoredPrediction): void {
+        const values = current.values;
+        const nums = [
+          values.air_temperature,
+          values.process_temperature,
+          values.rotational_speed,
+          values.torque,
+          values.tool_wear,
+        ];
+        if (nums.some((value) => !Number.isFinite(Number(value)))) return;
+        const body = JSON.stringify({
+          air_temperature: Number(values.air_temperature),
+          process_temperature: Number(values.process_temperature),
+          rotational_speed: Number(values.rotational_speed),
+          torque: Number(values.torque),
+          tool_wear: Number(values.tool_wear),
+        });
+        void (async () => {
+          try {
+            const response = await fetch('http://localhost:8001/api/predict', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body,
+            });
+            if (!response.ok) return;
+            const updated = (await response.json()) as PredictResponse;
+            const merged: StoredPrediction = { ...current, response: updated };
+            try {
+              sessionStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+            } catch {
+              /* sin soporte de storage */
+            }
+            render(merged);
+            void loadMemberships(merged);
+            const note = document.getElementById('refresh-note') as HTMLElement;
+            if (note !== null) {
+              note.textContent =
+                'La predicción guardada era de una versión anterior: se re-predijo con los inputs guardados y la vista se actualizó.';
+              note.style.display = 'block';
+            }
+          } catch {
+            /* sin conexión con el backend: se mantiene la predicción guardada */
+          }
+        })();
       }
 
       try {
@@ -405,7 +974,18 @@ import Base from "../layouts/Base.astro";
         if (raw === null) {
           showEmpty();
         } else {
-          render(JSON.parse(raw) as StoredPrediction);
+          const prediction = JSON.parse(raw) as StoredPrediction;
+          render(prediction);
+          void loadMemberships(prediction);
+          const stale = (prediction.response.activated_rules ?? []).some(
+            (rule) =>
+              rule.antecedents === undefined ||
+              rule.consequent === undefined ||
+              rule.consequent_display === undefined,
+          );
+          if (stale) {
+            refreshStoredPrediction(prediction);
+          }
         }
       } catch {
         showEmpty();

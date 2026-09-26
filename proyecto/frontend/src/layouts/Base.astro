@@ -21,17 +21,16 @@ const { title, activeTab } = Astro.props;
     <ClientRouter />
     <style is:global>
       :root {
-        --bg: #0e1216;
-        --panel: #161c22;
-        --panel-2: #1b232b;
-        --border: #26313b;
-        --text: #e6ebf0;
-        --muted: #93a1ad;
-        --accent: #4cc2ff;
-        --green: #3fb27f;
-        --yellow: #e3b341;
-        --orange: #e07b39;
-        --red: #d9503f;
+        --bg: #1a1a1a;
+        --panel: #222222;
+        --panel-2: #282828;
+        --border: #3a3a3a;
+        --text: #e6e6e6;
+        --muted: #9a9a9a;
+        --accent: #c2c2c2;
+        --accent-ink: #c2c2c2;
+        --on-accent: #1e1e1e;
+        --red: #d0654a;
         --radius: 12px;
       }
 
@@ -79,7 +78,8 @@ const { title, activeTab } = Astro.props;
 
       nav.tabs a.active {
         background: var(--panel);
-        color: var(--accent);
+        color: var(--accent-ink);
+        border-bottom: 2px solid var(--accent);
       }
     </style>
   </head>

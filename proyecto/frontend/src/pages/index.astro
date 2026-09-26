@@ -35,7 +35,7 @@ import Base from "../layouts/Base.astro";
       display: block;
       border-radius: 10px;
       border: 1px solid var(--border);
-      background: radial-gradient(ellipse at 50% 30%, #1a222b 0%, #0e1216 75%);
+      background: radial-gradient(ellipse at 50% 30%, #2b2b2b 0%, #1c1c1c 75%);
     }
 
     .panel-col {
@@ -69,8 +69,8 @@ import Base from "../layouts/Base.astro";
       height: 32px;
       border-radius: 50%;
       background: var(--accent);
-      border: 1px solid rgba(76, 194, 255, 0.6);
-      color: #06202e;
+      border: 1px solid var(--border);
+      color: var(--on-accent);
       font-family: 'Geist Mono', monospace;
       font-weight: 500;
     }
@@ -103,7 +103,7 @@ import Base from "../layouts/Base.astro";
     .card-body input {
       flex: 1;
       min-width: 0;
-      background: #0c1116;
+      background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: 6px 8px;
@@ -113,22 +113,23 @@ import Base from "../layouts/Base.astro";
     }
 
     .card-body input:focus {
-      outline: 2px solid var(--accent);
+      outline: 2px solid var(--accent-ink);
       border-color: transparent;
     }
 
     .unit {
       flex: none;
       font-size: 0.68rem;
-      color: var(--accent);
-      border: 1px solid rgba(76, 194, 255, 0.35);
+      background: var(--accent);
+      color: var(--on-accent);
+      border: 1px solid var(--border);
       border-radius: 4px;
-      padding: 0 5px;
+      padding: 1px 5px;
     }
 
     .range {
       font-size: 0.7rem;
-      color: #6d7b88;
+      color: var(--muted);
     }
 
     .actions {
@@ -145,7 +146,7 @@ import Base from "../layouts/Base.astro";
       padding: 12px 22px;
       font-size: 1rem;
       font-weight: 500;
-      color: #06202e;
+      color: var(--on-accent);
       cursor: pointer;
     }
 
@@ -163,7 +164,7 @@ import Base from "../layouts/Base.astro";
 
     .units-note code {
       font-family: 'Geist Mono', monospace;
-      color: var(--accent);
+      color: var(--accent-ink);
     }
 
     .loading {
@@ -175,9 +176,9 @@ import Base from "../layouts/Base.astro";
 
     .error {
       display: none;
-      background: #2a1a18;
+      background: #3a201b;
       border: 1px solid var(--red);
-      color: #ffb4a8;
+      color: #ffb4a0;
       border-radius: 6px;
       padding: 12px;
       margin-top: 14px;
@@ -219,7 +220,7 @@ import Base from "../layouts/Base.astro";
     .bar {
       height: 14px;
       border-radius: 7px;
-      background: #0b0f13;
+      background: #2b2b2b;
       border: 1px solid var(--border);
       overflow: hidden;
       margin: 12px 0 16px;
@@ -261,8 +262,8 @@ import Base from "../layouts/Base.astro";
     }
 
     a.toggle:hover {
-      color: var(--accent);
-      border-color: var(--accent);
+      color: var(--accent-ink);
+      border-color: var(--accent-ink);
     }
 
     @media (max-width: 920px) {
@@ -277,7 +278,7 @@ import Base from "../layouts/Base.astro";
         <div class="machine-col">
           <img
             class="machine-img"
-            src="/machine.png?v=2"
+            src="/machine.png?v=6"
             alt="Esquema 2D de un torno con sensores numerados"
             width="1400"
             height="900"
@@ -390,7 +391,7 @@ import Base from "../layouts/Base.astro";
         <div class="bar-fill" id="risk-bar"></div>
       </div>
 
-      <div class="action">
+      <div class="action" id="action-box">
         <strong id="action-title">—</strong>
         <span id="action-desc"></span>
       </div>
@@ -415,10 +416,17 @@ import Base from "../layouts/Base.astro";
       const analyzeBtn = document.getElementById('analyze-btn') as HTMLButtonElement;
 
       const LEVEL_COLORS: Record<string, string> = {
-        bajo: '#3fb27f',
-        moderado: '#e3b341',
-        alto: '#e07b39',
-        critico: '#d9503f',
+        bajo: '#51cf66',
+        moderado: '#ffb54d',
+        alto: '#ff922b',
+        critico: '#ff6b6b',
+      };
+
+      const LEVEL_TEXT: Record<string, string> = {
+        bajo: '#1a1a1a',
+        moderado: '#1a1a1a',
+        alto: '#1a1a1a',
+        critico: '#1a1a1a',
       };
 
       const INPUT_IDS = ['air_temperature', 'process_temperature', 'rotational_speed', 'torque', 'tool_wear'];
@@ -499,14 +507,21 @@ import Base from "../layouts/Base.astro";
         const bar = document.getElementById('risk-bar') as HTMLElement;
         const actionTitle = document.getElementById('action-title') as HTMLElement;
         const actionDesc = document.getElementById('action-desc') as HTMLElement;
+        const actionBox = document.getElementById('action-box') as HTMLElement;
         const factorsList = document.getElementById('factors-list') as HTMLElement;
 
         score.childNodes[0].textContent = String(data.risk_score);
         level.textContent = data.risk_level_display;
-        level.style.color = LEVEL_COLORS[data.risk_level] ?? '#e6ebf0';
+        const tone = LEVEL_COLORS[data.risk_level] ?? '#5c5c5c';
+        level.style.background = tone;
+        level.style.color = LEVEL_TEXT[data.risk_level] ?? '#efefef';
+        level.style.padding = '3px 12px';
+        level.style.borderRadius = '999px';
         bar.style.width = `${data.risk_score}%`;
-        bar.style.background = LEVEL_COLORS[data.risk_level] ?? '#e6ebf0';
+        bar.style.background = tone;
         actionTitle.textContent = data.action;
+        actionTitle.style.color = tone;
+        actionBox.style.borderLeft = `3px solid ${tone}`;
         actionDesc.textContent = `Nivel ${data.risk_level_display.toLowerCase()} de riesgo de fallo predicho por el sistema difuso.`;
 
         factorsList.innerHTML = '';
