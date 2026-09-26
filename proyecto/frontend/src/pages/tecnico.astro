@@ -98,6 +98,32 @@ import Base from "../layouts/Base.astro";
       margin: 0 0 12px;
     }
 
+    .seg {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 0 0 12px;
+    }
+
+    .seg-btn {
+      background: transparent;
+      border: 0;
+      color: var(--muted);
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .seg-btn:hover { color: var(--text); }
+
+    .seg-btn.active {
+      background: var(--accent);
+      color: #141414;
+      font-weight: 500;
+    }
+
     .mf-block {
       margin-bottom: 26px;
     }
@@ -292,6 +318,10 @@ import Base from "../layouts/Base.astro";
       <div id="memberships-grid"></div>
 
       <h3>Funciones de pertenencia por variable</h3>
+      <div class="seg" id="mode-seg" role="group" aria-label="Parámetros de las curvas">
+        <button type="button" class="seg-btn active" data-mode="optimized">Optimizados (GA)</button>
+        <button type="button" class="seg-btn" data-mode="original">Mostrar originales</button>
+      </div>
       <p class="mf-note" id="mf-note">—</p>
       <div id="membership-sections"></div>
 
@@ -411,6 +441,7 @@ import Base from "../layouts/Base.astro";
       factors: string[];
       activated_rules: RuleActivation[];
       memberships: Record<string, Record<string, number>>;
+      params_used: string;
     }
 
     interface StoredPrediction {
@@ -473,14 +504,24 @@ import Base from "../layouts/Base.astro";
 
     let memberCharts: CurveChart[] = [];
 
+    let currentMode: 'optimized' | 'original' = 'optimized';
+
     function buildCurve(min: number, max: number, points: number[]): CurvePoint[] {
       const fn = points.length === 4 ? trap : tri;
       const out: CurvePoint[] = [];
-      const steps = 80;
+      const steps = 400;
       for (let i = 0; i <= steps; i++) {
         const x = min + ((max - min) * i) / steps;
         out.push({ x, y: fn(x, points) });
       }
+      // Inserta los vértices exactos (picos y quiebres) para que la curva
+      // sea fiel a la función: sin muestreo basta, el ápice debe ser un punto.
+      for (const bp of points) {
+        if (bp > min && bp < max) {
+          out.push({ x: bp, y: fn(bp, points) });
+        }
+      }
+      out.sort((a, b) => a.x - b.x);
       return out;
     }
 
@@ -522,9 +563,10 @@ import Base from "../layouts/Base.astro";
       marker: number | null,
     ): CurveChart {
       const datasets: ChartDataset<'line', CurvePoint[]>[] = terms.flatMap((term) => {
-        const optimized: ChartDataset<'line', CurvePoint[]> = {
+        const points = currentMode === 'original' && term.original !== null ? term.original : term.points;
+        const dataset: ChartDataset<'line', CurvePoint[]> = {
           label: term.display,
-          data: buildCurve(min, max, term.points),
+          data: buildCurve(min, max, points),
           borderColor: term.color,
           backgroundColor: withAlpha(term.color, 0.12),
           borderWidth: 2.5,
@@ -532,20 +574,7 @@ import Base from "../layouts/Base.astro";
           tension: 0,
           fill: true,
         };
-        const layered: ChartDataset<'line', CurvePoint[]>[] = [optimized];
-        if (term.original) {
-          layered.push({
-            label: `${term.display} · original`,
-            data: buildCurve(min, max, term.original),
-            borderColor: term.color,
-            borderWidth: 1.5,
-            borderDash: [6, 5],
-            pointRadius: 0,
-            tension: 0,
-            fill: false,
-          });
-        }
-        return layered;
+        return [dataset];
       });
 
       const plugins: Plugin<'line'>[] = marker === null ? [] : [valueMarkerPlugin(marker)];
@@ -566,7 +595,6 @@ import Base from "../layouts/Base.astro";
                 boxHeight: 8,
                 padding: 14,
                 font: { size: 10 },
-                filter: (item: { text: string }) => !item.text.endsWith(' · original'),
               },
             },
             tooltip: {
@@ -647,11 +675,15 @@ import Base from "../layouts/Base.astro";
       memberCharts.length = 0;
       const values = prediction ? prediction.values : null;
 
+      const activeParam = currentMode === 'original' ? 'original' : 'optimizado';
       const paramsColumns: ColumnDef<Record<string, string>, unknown>[] = [
         { id: 'categoria', accessorKey: 'categoria', header: 'Categoría' },
         { id: 'forma', accessorKey: 'forma', header: 'Forma' },
-        { id: 'original', accessorKey: 'original', header: 'Parámetros originales' },
-        { id: 'optimizado', accessorKey: 'optimizado', header: 'Parámetros optimizados' },
+        {
+          id: activeParam,
+          accessorKey: activeParam,
+          header: currentMode === 'original' ? 'Parámetros originales' : 'Parámetros optimizados',
+        },
       ];
 
       for (const key of Object.keys(payload.variables)) {
@@ -744,7 +776,9 @@ import Base from "../layouts/Base.astro";
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const payload = (await response.json()) as MembershipsPayload;
         note.textContent =
-          'Sólido: parámetros optimizados por el GA · Punteado: originales (por defecto). La línea vertical marca el valor de la inspección.';
+          currentMode === 'original'
+            ? 'Solo se muestran las curvas originales (sin GA): toda esta vista está calculada con los parámetros originales. La línea vertical marca el valor de la inspección.'
+            : 'Sólido: parámetros optimizados por el GA (curvas originales ocultas; actívalas con el selector). La línea vertical marca el valor de la inspección.';
         renderMemberships(payload, prediction);
       } catch {
         note.textContent = 'No se pudieron cargar las funciones de pertenencia (API no disponible).';
@@ -753,6 +787,7 @@ import Base from "../layouts/Base.astro";
 
     document.addEventListener('astro:page-load', () => {
       const STORAGE_KEY = 'mantenimiento_prediccion';
+      const MODE_KEY = 'mantenimiento_modo';
 
       const LEVEL_COLORS: Record<string, string> = {
         bajo: '#51cf66',
@@ -923,6 +958,73 @@ import Base from "../layouts/Base.astro";
         hasData.style.display = 'block';
       }
 
+      async function fetchPrediction(values: Record<string, number>, useOptimized: boolean): Promise<PredictResponse> {
+        const body = JSON.stringify({
+          air_temperature: Number(values.air_temperature),
+          process_temperature: Number(values.process_temperature),
+          rotational_speed: Number(values.rotational_speed),
+          torque: Number(values.torque),
+          tool_wear: Number(values.tool_wear),
+          use_optimized: useOptimized,
+        });
+        const response = await fetch('http://localhost:8001/api/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json() as Promise<PredictResponse>;
+      }
+
+      function setModeUI(mode: 'optimized' | 'original'): void {
+        currentMode = mode;
+        const seg = document.getElementById('mode-seg');
+        if (seg !== null) {
+          for (const btn of seg.querySelectorAll<HTMLButtonElement>('.seg-btn')) {
+            btn.classList.toggle('active', btn.dataset.mode === mode);
+          }
+        }
+        try {
+          sessionStorage.setItem(MODE_KEY, mode);
+        } catch {
+          /* sin soporte */
+        }
+      }
+
+      function applyMode(mode: 'optimized' | 'original'): void {
+        if (mode === currentMode) return;
+        setModeUI(mode);
+        const raw = sessionStorage.getItem(STORAGE_KEY);
+        if (raw === null) return;
+        try {
+          const prediction = JSON.parse(raw) as StoredPrediction;
+          void (async () => {
+            try {
+              const updated = await fetchPrediction(prediction.values, mode === 'optimized');
+              const merged: StoredPrediction = { ...prediction, response: updated };
+              try {
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+              } catch {
+                /* sin soporte */
+              }
+              render(merged);
+              void loadMemberships(merged);
+            } catch {
+              /* sin conexión con el backend: se mantiene la predicción guardada */
+            }
+          })();
+        } catch {
+          /* datos corruptos: se ignora */
+        }
+      }
+
+      document.querySelectorAll<HTMLButtonElement>('#mode-seg .seg-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const mode: 'optimized' | 'original' = btn.dataset.mode === 'original' ? 'original' : 'optimized';
+          applyMode(mode);
+        });
+      });
+
       function refreshStoredPrediction(current: StoredPrediction): void {
         const values = current.values;
         const nums = [
@@ -933,22 +1035,10 @@ import Base from "../layouts/Base.astro";
           values.tool_wear,
         ];
         if (nums.some((value) => !Number.isFinite(Number(value)))) return;
-        const body = JSON.stringify({
-          air_temperature: Number(values.air_temperature),
-          process_temperature: Number(values.process_temperature),
-          rotational_speed: Number(values.rotational_speed),
-          torque: Number(values.torque),
-          tool_wear: Number(values.tool_wear),
-        });
+        const useOptimized = current.response.params_used !== 'original';
         void (async () => {
           try {
-            const response = await fetch('http://localhost:8001/api/predict', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body,
-            });
-            if (!response.ok) return;
-            const updated = (await response.json()) as PredictResponse;
+            const updated = await fetchPrediction(values, useOptimized);
             const merged: StoredPrediction = { ...current, response: updated };
             try {
               sessionStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
@@ -975,6 +1065,9 @@ import Base from "../layouts/Base.astro";
           showEmpty();
         } else {
           const prediction = JSON.parse(raw) as StoredPrediction;
+          const storedMode: 'optimized' | 'original' =
+            prediction.response.params_used === 'original' ? 'original' : 'optimized';
+          setModeUI(storedMode);
           render(prediction);
           void loadMemberships(prediction);
           const stale = (prediction.response.activated_rules ?? []).some(

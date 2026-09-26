@@ -139,6 +139,37 @@ import Base from "../layouts/Base.astro";
       margin-top: 14px;
     }
 
+    .seg {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .seg-btn {
+      background: transparent;
+      border: 0;
+      color: var(--muted);
+      padding: 9px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .seg-btn:hover { color: var(--text); }
+
+    .seg-btn.active {
+      background: var(--accent);
+      color: #141414;
+      font-weight: 500;
+    }
+
+    .mode-used {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin: -6px 0 12px;
+    }
+
     button.primary {
       background: var(--accent);
       border: none;
@@ -370,6 +401,10 @@ import Base from "../layouts/Base.astro";
           </form>
 
           <div class="actions">
+            <div class="seg" id="mode-seg" role="group" aria-label="Parámetros del cálculo">
+              <button type="button" class="seg-btn active" data-mode="optimized">Optimizados (GA)</button>
+              <button type="button" class="seg-btn" data-mode="original">Originales</button>
+            </div>
             <button class="primary" id="analyze-btn" type="submit" form="predict-form">Analizar condiciones</button>
           </div>
         </div>
@@ -381,6 +416,7 @@ import Base from "../layouts/Base.astro";
 
     <section class="result" id="result" aria-label="Resultado">
       <h2>Resultado de la inspección</h2>
+      <p class="mode-used" id="mode-used"></p>
 
       <div class="risk-row">
         <div class="risk-score" id="risk-score">—<small> / 100</small></div>
@@ -468,6 +504,45 @@ import Base from "../layouts/Base.astro";
         document.getElementById(id)?.addEventListener('input', saveInputs);
       }
 
+      const MODE_KEY = 'mantenimiento_modo';
+
+      function getMode(): 'optimized' | 'original' {
+        try {
+          const raw = sessionStorage.getItem(MODE_KEY);
+          if (raw === 'original' || raw === 'optimized') return raw;
+        } catch {
+          /* sin soporte */
+        }
+        return 'optimized';
+      }
+
+      function setModeUI(mode: 'optimized' | 'original'): void {
+        const seg = document.getElementById('mode-seg');
+        if (seg !== null) {
+          for (const btn of seg.querySelectorAll<HTMLButtonElement>('.seg-btn')) {
+            btn.classList.toggle('active', btn.dataset.mode === mode);
+          }
+        }
+        try {
+          sessionStorage.setItem(MODE_KEY, mode);
+        } catch {
+          /* sin soporte */
+        }
+      }
+
+      setModeUI(getMode());
+
+      document.querySelectorAll<HTMLButtonElement>('#mode-seg .seg-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const wasActive = btn.classList.contains('active');
+          const mode: 'optimized' | 'original' = btn.dataset.mode === 'original' ? 'original' : 'optimized';
+          setModeUI(mode);
+          if (!wasActive && result.style.display !== 'none') {
+            void runAnalysis(mode, false);
+          }
+        });
+      });
+
       interface RuleActivation {
         name: string;
         cause: string;
@@ -483,6 +558,7 @@ import Base from "../layouts/Base.astro";
         factors: string[];
         activated_rules: RuleActivation[];
         memberships: Record<string, Record<string, number>>;
+        params_used: string;
       }
 
       function showError(message: string): void {
@@ -509,6 +585,12 @@ import Base from "../layouts/Base.astro";
         const actionDesc = document.getElementById('action-desc') as HTMLElement;
         const actionBox = document.getElementById('action-box') as HTMLElement;
         const factorsList = document.getElementById('factors-list') as HTMLElement;
+        const modeUsed = document.getElementById('mode-used') as HTMLElement;
+
+        modeUsed.textContent =
+          data.params_used === 'original'
+            ? 'Resultado calculado con los parámetros originales (sin GA).'
+            : 'Resultado calculado con los parámetros optimizados por el GA.';
 
         score.childNodes[0].textContent = String(data.risk_score);
         level.textContent = data.risk_level_display;
@@ -532,11 +614,9 @@ import Base from "../layouts/Base.astro";
         }
 
         result.style.display = 'block';
-        result.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
 
-      form.addEventListener('submit', async (event: Event) => {
-        event.preventDefault();
+      async function runAnalysis(mode: 'optimized' | 'original', scroll: boolean): Promise<void> {
         hideErrorAndShowLoading();
 
         const values = {
@@ -545,6 +625,7 @@ import Base from "../layouts/Base.astro";
           rotational_speed: Number((document.getElementById('rotational_speed') as HTMLInputElement).value),
           torque: Number((document.getElementById('torque') as HTMLInputElement).value),
           tool_wear: Number((document.getElementById('tool_wear') as HTMLInputElement).value),
+          use_optimized: mode === 'optimized',
         };
 
         try {
@@ -567,12 +648,20 @@ import Base from "../layouts/Base.astro";
             JSON.stringify({ values: values, response: data }),
           );
           renderResult(data);
+          if (scroll) {
+            result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
         } catch (err) {
           showError(err instanceof Error ? err.message : 'Error inesperado.');
         } finally {
           loading.style.display = 'none';
           analyzeBtn.disabled = false;
         }
+      }
+
+      form.addEventListener('submit', async (event: Event) => {
+        event.preventDefault();
+        await runAnalysis(getMode(), true);
       });
     });
   </script>

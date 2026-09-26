@@ -75,6 +75,11 @@ class MaintenanceModel:
         self.system: FuzzySystem = FuzzySystem(
             cast(dict[str, dict[str, float]], parameters["parameters"])
         )
+        # Sistema con los parámetros originales (sin optimización por GA).
+        self.system_defaults: FuzzySystem = FuzzySystem()
+
+    def _system_for(self, use_optimized: bool) -> FuzzySystem:
+        return self.system if use_optimized else self.system_defaults
 
     def predict(self, inputs: PredictionInput) -> PredictionResponse:
         thermal_gap: float = round(inputs.process_temperature - inputs.air_temperature, 2)
@@ -87,7 +92,10 @@ class MaintenanceModel:
             "tool_wear": inputs.tool_wear,
         }
 
-        result: dict[str, object] = self.system.predict(row)
+        system: FuzzySystem = self._system_for(inputs.use_optimized)
+        params_used: str = "optimized" if inputs.use_optimized else "original"
+
+        result: dict[str, object] = system.predict(row)
 
         risk_score: float = float(cast(float, result["risk_score"]))
 
@@ -126,4 +134,5 @@ class MaintenanceModel:
             factors=factors,
             activated_rules=activated_rules,
             memberships=memberships,
+            params_used=params_used,
         )

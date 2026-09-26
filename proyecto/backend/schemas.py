@@ -12,8 +12,9 @@ class PredictionInput(BaseModel):
     rotational_speed: Annotated[float, StrictFloat]
     torque: Annotated[float, StrictFloat]
     tool_wear: Annotated[float, StrictFloat]
+    use_optimized: bool = True
 
-    @field_validator("*")
+    @field_validator("air_temperature", "process_temperature", "rotational_speed", "torque", "tool_wear")
     @classmethod
     def validate_finite_and_range(cls, value: float, info) -> float:
         if not math.isfinite(value):
@@ -57,3 +58,4 @@ class PredictionResponse(BaseModel):
     factors: list[str]
     activated_rules: list[RuleActivation]
     memberships: dict[str, dict[str, float]]
+    params_used: str = "optimized"
