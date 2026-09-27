@@ -75,7 +75,7 @@ class MaintenanceModel:
         self.system: FuzzySystem = FuzzySystem(
             cast(dict[str, dict[str, float]], parameters["parameters"])
         )
-        # Sistema con los parámetros originales (sin optimización por GA).
+
         self.system_defaults: FuzzySystem = FuzzySystem()
 
     def _system_for(self, use_optimized: bool) -> FuzzySystem:
@@ -134,5 +134,6 @@ class MaintenanceModel:
             factors=factors,
             activated_rules=activated_rules,
             memberships=memberships,
+            output_strengths=cast(dict[str, float], result["output_strengths"]),
             params_used=params_used,
         )

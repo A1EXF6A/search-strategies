@@ -1,4 +1,3 @@
-import math
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
@@ -13,42 +12,25 @@ from schemas import PredictionInput, PredictionResponse
 model: MaintenanceModel | None = None
 
 
-def _sanitize(value: object) -> object:
-    if isinstance(value, float) and not math.isfinite(value):
-        return None
-
-    if isinstance(value, dict):
-        sanitized: dict[object, object] = {}
-
-        for key, item in value.items():
-            sanitized[key] = _sanitize(item)
-
-        return sanitized
-
-    if isinstance(value, list):
-        sanitized_list: list[object] = []
-
-        for item in value:
-            sanitized_list.append(_sanitize(item))
-
-        return sanitized_list
-
-    if isinstance(value, (str, int, bool)) or value is None:
-        return value
-
-    return str(value)
-
-
 async def validation_exception_handler(
-    request: Request, exc: Exception
+    request: Request, exc: Exception,
 ) -> JSONResponse:
     if not isinstance(exc, RequestValidationError):
         return JSONResponse(status_code=500, content={"detail": "Error interno"})
 
-    return JSONResponse(
-        status_code=422,
-        content={"detail": _sanitize(exc.errors())},
-    )
+    messages: list[str] = []
+
+    for error in exc.errors():
+        message: str = str(error.get("msg", "Entrada inválida"))
+
+        if message.startswith("Value error, "):
+            message = message[len("Value error, "):]
+
+        messages.append(message)
+
+    detail: str = "; ".join(messages) if messages else "Entrada inválida"
+
+    return JSONResponse(status_code=422, content={"detail": detail})
 
 
 @asynccontextmanager

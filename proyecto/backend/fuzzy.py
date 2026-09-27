@@ -4,17 +4,6 @@ from typing import cast
 
 import numpy as np
 import skfuzzy as fuzz
-from numpy.typing import NDArray
-from skfuzzy.control import (
-    Antecedent,
-    Consequent,
-    ControlSystem,
-    ControlSystemSimulation,
-    Rule,
-)
-from skfuzzy.control.controlsystem import CrispValueCalculator
-from skfuzzy.control.state import StatePerSimulation
-
 from config import (
     DEFAULT_PARAMETERS,
     FUZZY_RULES,
@@ -29,6 +18,16 @@ from config import (
     VARIABLE_SPECS,
     VariableSpec,
 )
+from numpy.typing import NDArray
+from skfuzzy.control import (
+    Antecedent,
+    Consequent,
+    ControlSystem,
+    ControlSystemSimulation,
+    Rule,
+)
+from skfuzzy.control.controlsystem import CrispValueCalculator
+from skfuzzy.control.state import StatePerSimulation
 
 FloatArray = NDArray[np.float64]
 
@@ -123,7 +122,7 @@ class FuzzySystem:
             universe: FloatArray = np.linspace(
                 spec["min"], spec["max"], UNIVERSE_POINTS
             )
-            antecedent = Antecedent(universe, variable)
+            antecedent: Antecedent = Antecedent(universe, variable)
             cut: dict[str, float] = self.parameters[variable]
 
             antecedent["low"] = fuzz.trapmf(
@@ -186,8 +185,7 @@ class FuzzySystem:
         return "trapezoidal", (cut["p2"], cut["p3"], spec["max"], spec["max"])
 
     def memberships_info(self) -> dict[str, object]:
-        """Describe las funciones de pertenencia: originales (DEFAULT_PARAMETERS)
-        y optimizadas (self.parameters, cargadas por el modelo al iniciar)."""
+
         optimized: dict[str, dict[str, float]] = cast(
             dict[str, dict[str, float]], self.parameters
         )
@@ -202,9 +200,7 @@ class FuzzySystem:
                 shape, original_points = self._membership_points(
                     variable, term, DEFAULT_PARAMETERS
                 )
-                _, optimized_points = self._membership_points(
-                    variable, term, optimized
-                )
+                _, optimized_points = self._membership_points(variable, term, optimized)
 
                 terms[term] = {
                     "display": TERM_LABELS_ES[term],
@@ -332,7 +328,9 @@ class FuzzySystem:
                         "name": rule.label,
                         "antecedents": self._rule_antecedents[str(rule.label)],
                         "consequent": consequent_label,
-                        "consequent_display": UPPER_RISK_TERM_LABELS_ES.get(consequent_label, consequent_label),
+                        "consequent_display": UPPER_RISK_TERM_LABELS_ES.get(
+                            consequent_label, consequent_label
+                        ),
                         "strength": round(strength, 3),
                     }
                 )
@@ -360,4 +358,3 @@ class FuzzySystem:
             "activated_rules": activated_rules,
             "output_strengths": output_rounded,
         }
-

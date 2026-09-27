@@ -143,7 +143,6 @@ import Base from "../layouts/Base.astro";
       display: inline-flex;
       border: 1px solid var(--border);
       border-radius: 8px;
-      overflow: hidden;
     }
 
     .seg-btn {
@@ -179,6 +178,10 @@ import Base from "../layouts/Base.astro";
       font-weight: 500;
       color: var(--on-accent);
       cursor: pointer;
+    }
+
+    button.condition {
+      font-size: 0.9rem;
     }
 
     button.primary:hover { opacity: 0.92; }
@@ -405,7 +408,7 @@ import Base from "../layouts/Base.astro";
               <button type="button" class="seg-btn active" data-mode="optimized">Optimizados (GA)</button>
               <button type="button" class="seg-btn" data-mode="original">Originales</button>
             </div>
-            <button class="primary" id="analyze-btn" type="submit" form="predict-form">Analizar condiciones</button>
+            <button class="primary condition" id="analyze-btn" type="submit" form="predict-form">Analizar condiciones</button>
           </div>
         </div>
       </div>
@@ -480,7 +483,7 @@ import Base from "../layouts/Base.astro";
             }
           }
         } catch {
-          /* datos corruptos o sin soporte: se ignoran */
+
         }
       }
 
@@ -495,7 +498,7 @@ import Base from "../layouts/Base.astro";
           }
           sessionStorage.setItem(INPUTS_KEY, JSON.stringify(values));
         } catch {
-          /* sin soporte de sessionStorage: se ignora */
+
         }
       }
 
@@ -511,7 +514,7 @@ import Base from "../layouts/Base.astro";
           const raw = sessionStorage.getItem(MODE_KEY);
           if (raw === 'original' || raw === 'optimized') return raw;
         } catch {
-          /* sin soporte */
+
         }
         return 'optimized';
       }
@@ -526,7 +529,7 @@ import Base from "../layouts/Base.astro";
         try {
           sessionStorage.setItem(MODE_KEY, mode);
         } catch {
-          /* sin soporte */
+
         }
       }
 

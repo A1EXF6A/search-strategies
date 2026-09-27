@@ -388,3 +388,22 @@ def test_predict_incoherent_temperatures(client: TestClient) -> None:
     response = client.post("/api/predict", json=payload)
 
     assert response.status_code == 422
+
+
+def test_predict_thermal_gap_out_of_range(client: TestClient) -> None:
+    payload: dict[str, float] = {
+        "air_temperature": 290.0,
+        "process_temperature": 311.5,
+        "rotational_speed": 2000,
+        "torque": 40.0,
+        "tool_wear": 120,
+    }
+
+    response = client.post("/api/predict", json=payload)
+
+    assert response.status_code == 422
+
+    detail: str = cast(str, response.json()["detail"])
+
+    assert "brecha térmica" in detail
+    assert "21.5" in detail

@@ -98,6 +98,12 @@ import Base from "../layouts/Base.astro";
       margin: 0 0 12px;
     }
 
+    .risk-note {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin: 8px 0 0;
+    }
+
     .seg {
       display: inline-flex;
       border: 1px solid var(--border);
@@ -124,7 +130,21 @@ import Base from "../layouts/Base.astro";
       font-weight: 500;
     }
 
+    #has-data { display: none; }
+  </style>
+
+  <style is:global>
+
+    .gt {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--panel-2);
+    }
+
+
     .mf-block {
+      margin-top: 30px;
       margin-bottom: 26px;
     }
 
@@ -152,10 +172,9 @@ import Base from "../layouts/Base.astro";
       align-items: start;
     }
 
-    @media (max-width: 860px) {
-      .mf-block-grid {
-        grid-template-columns: 1fr;
-      }
+
+    .mf-block-table {
+      grid-column: 1 / -1;
     }
 
     .mf-card {
@@ -167,7 +186,12 @@ import Base from "../layouts/Base.astro";
 
     .mf-chart-box {
       position: relative;
-      height: 210px;
+      height: 200px;
+      width: 100%;
+    }
+
+    .mf-chart-box.output {
+      height: 300px;
       width: 100%;
     }
 
@@ -178,17 +202,63 @@ import Base from "../layouts/Base.astro";
       height: 100% !important;
     }
 
-    #has-data { display: none; }
-  </style>
+    .risk-layout {
+      display: grid;
+      gap: 14px;
+    }
 
-  <style is:global>
-    /* Estilos de las tablas TanStack: el DOM se construye por JS en runtime y
-       no lleva data-astro-cid, por eso estas reglas deben ser globales. */
-    .gt {
+    .risk-rules {
+      margin-top: 10px;
+    }
+
+    .risk-rules-title {
+      margin: 0 0 8px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .risk-rules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .risk-rule {
+      background: var(--panel, #202020);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      background: var(--panel-2);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .risk-rule-label {
+      font-size: 0.78rem;
+      color: var(--text);
+      margin: 0 0 6px;
+    }
+
+    .risk-rule-label b {
+      color: var(--accent-ink, #ffb86c);
+      font-weight: 600;
+    }
+
+    .risk-rule-force {
+      color: var(--muted);
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      margin-left: 6px;
+    }
+
+    .risk-rule-chart {
+      height: 130px;
+      position: relative;
+    }
+
+    .risk-note {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin: 8px 0 0;
     }
 
     .gt-table {
@@ -325,10 +395,27 @@ import Base from "../layouts/Base.astro";
       <p class="mf-note" id="mf-note">—</p>
       <div id="membership-sections"></div>
 
-      <h3>Reglas activadas</h3>
-      <div class="dominant" id="dominant-rule" style="display:none"></div>
-      <p class="mf-note" id="refresh-note" style="display:none"></p>
-      <div id="reglas-grid"></div>
+      <section class="mf-block" id="salida-block" aria-label="Salida: riesgo de fallo">
+        <h4 class="mf-block-title">Salida: Riesgo de fallo</h4>
+
+        <div id="salida-rules">
+          <h5 class="risk-rules-title">Reglas activadas</h5>
+          <div class="dominant" id="dominant-rule" style="display:none"></div>
+          <p class="mf-note" id="refresh-note" style="display:none"></p>
+          <div id="reglas-grid"></div>
+        </div>
+
+        <div class="risk-rules" id="salida-rules-box" style="display:none">
+          <h5 class="risk-rules-title">Contribución de cada regla activada</h5>
+          <div class="risk-rules-grid" id="salida-rules-grid"></div>
+        </div>
+
+        <div class="mf-card">
+          <div class="mf-chart-box output" id="salida-chart-box"></div>
+        </div>
+
+        <p class="risk-note" id="salida-note"></p>
+      </section>
 
       <a class="back" href="/">← Volver a la vista de operación</a>
     </section>
@@ -342,7 +429,7 @@ import Base from "../layouts/Base.astro";
   <script>
     import { createTable, getCoreRowModel, type ColumnDef } from '@tanstack/table-core';
     import Chart from 'chart.js/auto';
-    import type { ChartConfiguration, ChartDataset, LinearScale, Plugin } from 'chart.js';
+    import type { ChartConfiguration, ChartDataset, ChartOptions, LinearScale, Plugin } from 'chart.js';
 
     interface HeaderLike {
       id: string;
@@ -378,9 +465,9 @@ import Base from "../layouts/Base.astro";
         onStateChange: () => {},
         renderFallbackValue: null,
       });
-      // v8.21: createTable calcula initialState con los defaults de cada feature
-      // pero no lo fusiona en options.state (eso lo hace el adapter de React).
-      // En vanilla hay que mergearlo manualmente o getState() queda vacío.
+
+
+
       table.setOptions((prev) => ({ ...prev, state: { ...table.initialState, ...prev.state } }));
       return table;
     }
@@ -441,6 +528,7 @@ import Base from "../layouts/Base.astro";
       factors: string[];
       activated_rules: RuleActivation[];
       memberships: Record<string, Record<string, number>>;
+      output_strengths: Record<string, number>;
       params_used: string;
     }
 
@@ -514,8 +602,8 @@ import Base from "../layouts/Base.astro";
         const x = min + ((max - min) * i) / steps;
         out.push({ x, y: fn(x, points) });
       }
-      // Inserta los vértices exactos (picos y quiebres) para que la curva
-      // sea fiel a la función: sin muestreo basta, el ápice debe ser un punto.
+
+
       for (const bp of points) {
         if (bp > min && bp < max) {
           out.push({ x: bp, y: fn(bp, points) });
@@ -555,6 +643,60 @@ import Base from "../layouts/Base.astro";
       };
     }
 
+    function baseChartOptions(min: number, max: number): ChartOptions<'line'> {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'nearest', intersect: false },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#9a9a9a',
+              boxWidth: 14,
+              boxHeight: 8,
+              padding: 14,
+              font: { size: 10 },
+            },
+          },
+          tooltip: {
+            backgroundColor: 'rgba(34, 34, 34, 0.95)',
+            borderColor: '#3a3a3a',
+            borderWidth: 1,
+            titleColor: '#e6e6e6',
+            bodyColor: '#d0d0d0',
+          },
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            min,
+            max,
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            border: { color: '#3a3a3a' },
+            ticks: {
+              color: '#9a9a9a',
+              font: { family: "'Geist Mono', monospace", size: 10 },
+              maxTicksLimit: 6,
+              padding: 6,
+            },
+          },
+          y: {
+            min: 0,
+            max: 1,
+            ticks: {
+              stepSize: 0.25,
+              color: '#9a9a9a',
+              font: { family: "'Geist Mono', monospace", size: 10 },
+              padding: 6,
+            },
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            border: { color: '#3a3a3a' },
+          },
+        },
+      };
+    }
+
     function createMembershipChart(
       canvas: HTMLCanvasElement,
       terms: ChartTerm[],
@@ -572,6 +714,7 @@ import Base from "../layouts/Base.astro";
           borderWidth: 2.5,
           pointRadius: 0,
           tension: 0,
+          borderJoinStyle: 'miter',
           fill: true,
         };
         return [dataset];
@@ -582,57 +725,7 @@ import Base from "../layouts/Base.astro";
       const config: ChartConfiguration<'line', CurvePoint[], number> = {
         type: 'line',
         data: { datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'nearest', intersect: false },
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                color: '#9a9a9a',
-                boxWidth: 14,
-                boxHeight: 8,
-                padding: 14,
-                font: { size: 10 },
-              },
-            },
-            tooltip: {
-              backgroundColor: 'rgba(34, 34, 34, 0.95)',
-              borderColor: '#3a3a3a',
-              borderWidth: 1,
-              titleColor: '#e6e6e6',
-              bodyColor: '#d0d0d0',
-            },
-          },
-          scales: {
-            x: {
-              type: 'linear',
-              min,
-              max,
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              border: { color: '#3a3a3a' },
-              ticks: {
-                color: '#9a9a9a',
-                font: { family: "'Geist Mono', monospace", size: 10 },
-                maxTicksLimit: 6,
-                padding: 6,
-              },
-            },
-            y: {
-              min: 0,
-              max: 1,
-              ticks: {
-                stepSize: 0.25,
-                color: '#9a9a9a',
-                font: { family: "'Geist Mono', monospace", size: 10 },
-                padding: 6,
-              },
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              border: { color: '#3a3a3a' },
-            },
-          },
-        },
+        options: baseChartOptions(min, max),
         plugins,
       };
 
@@ -647,6 +740,164 @@ import Base from "../layouts/Base.astro";
       if (x >= b && x <= c) return 1;
       if (x > a && x < b) return (x - a) / (b - a);
       return (d - x) / (d - c);
+    }
+
+    interface RiskChartTerm {
+      key: string;
+      display: string;
+      color: string;
+      points: number[];
+    }
+
+    function clippedRiskCurves(
+      min: number,
+      max: number,
+      terms: RiskChartTerm[],
+      strengths: Record<string, number>,
+    ): { xs: number[]; clipped: Record<string, number[]>; union: number[] } {
+      const xsSet = new Set<number>();
+      const steps = 400;
+      for (let i = 0; i <= steps; i++) {
+        xsSet.add(min + ((max - min) * i) / steps);
+      }
+      for (const term of terms) {
+        for (const bp of term.points) {
+          if (bp > min && bp < max) xsSet.add(bp);
+        }
+      }
+      const xs = Array.from(xsSet).sort((a, b) => a - b);
+      const clipped: Record<string, number[]> = {};
+      const union = new Array<number>(xs.length).fill(0);
+      for (const term of terms) {
+        const fn = term.points.length === 4 ? trap : tri;
+        const cut = Math.max(0, Math.min(1, strengths[term.key] ?? 0));
+        const ys = xs.map((x) => {
+          const mf = Math.max(0, Math.min(1, fn(x, term.points)));
+          return Math.min(mf, cut);
+        });
+        clipped[term.key] = ys;
+        for (let i = 0; i < xs.length; i++) {
+          union[i] = Math.max(union[i], ys[i]);
+        }
+      }
+      return { xs, clipped, union };
+    }
+
+    function createRiskChart(
+      canvas: HTMLCanvasElement,
+      terms: RiskChartTerm[],
+      min: number,
+      max: number,
+      prediction: StoredPrediction | null,
+    ): CurveChart {
+      const datasets: ChartDataset<'line', CurvePoint[]>[] = [];
+
+
+      for (const term of terms) {
+        datasets.push({
+          label: term.display,
+          data: buildCurve(min, max, term.points),
+          borderColor: term.color,
+          backgroundColor: 'transparent',
+          borderWidth: 1.4,
+          borderDash: [5, 4],
+          pointRadius: 0,
+          tension: 0,
+          fill: false,
+        });
+      }
+
+      const strengths = prediction ? prediction.response.output_strengths : undefined;
+
+
+
+      if (prediction !== null && strengths !== undefined) {
+        const { xs, union } = clippedRiskCurves(min, max, terms, strengths);
+
+        datasets.push({
+          label: 'Masa agregada (unión)',
+          data: xs.map((x, i) => ({ x, y: union[i] })),
+          borderColor: '#e6e6e6',
+          backgroundColor: 'rgba(230, 230, 230, 0.22)',
+          borderWidth: 3,
+          pointRadius: 0,
+          tension: 0,
+          fill: true,
+        });
+      }
+
+      const marker = prediction ? prediction.response.risk_score : null;
+      const plugins: Plugin<'line'>[] = marker === null ? [] : [valueMarkerPlugin(marker)];
+
+      const config: ChartConfiguration<'line', CurvePoint[], number> = {
+        type: 'line',
+        data: { datasets },
+        options: baseChartOptions(min, max),
+        plugins,
+      };
+
+      const chart = new Chart(canvas, config);
+      memberCharts.push(chart);
+      return chart;
+    }
+
+    function createRuleChart(
+      canvas: HTMLCanvasElement,
+      term: RiskChartTerm,
+      min: number,
+      max: number,
+      cut: number,
+    ): CurveChart {
+      const full = buildCurve(min, max, term.points);
+      const clipped = full.map((p) => ({ x: p.x, y: Math.min(p.y, cut) }));
+      const datasets: ChartDataset<'line', CurvePoint[]>[] = [
+        {
+          label: term.display,
+          data: full,
+          borderColor: term.color,
+          backgroundColor: 'transparent',
+          borderWidth: 1.2,
+          borderDash: [4, 4],
+          pointRadius: 0,
+          tension: 0,
+          fill: false,
+        },
+        {
+          label: `recortado a ${cut.toFixed(2)}`,
+          data: clipped,
+          borderColor: term.color,
+          backgroundColor: withAlpha(term.color, 0.35),
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0,
+          fill: true,
+        },
+      ];
+
+      const options = baseChartOptions(min, max);
+      if (options.plugins !== undefined) {
+        options.plugins.legend = { display: false };
+      }
+      if (options.scales !== undefined) {
+        if (options.scales.y !== undefined) {
+          const yTicks = options.scales.y.ticks as { maxTicksLimit?: number };
+          yTicks.maxTicksLimit = 3;
+        }
+        if (options.scales.x !== undefined) {
+          const xTicks = options.scales.x.ticks as { maxTicksLimit?: number };
+          xTicks.maxTicksLimit = 4;
+        }
+      }
+
+      const config: ChartConfiguration<'line', CurvePoint[], number> = {
+        type: 'line',
+        data: { datasets },
+        options,
+      };
+
+      const chart = new Chart(canvas, config);
+      memberCharts.push(chart);
+      return chart;
     }
 
     function tri(x: number, p: number[]): number {
@@ -731,6 +982,7 @@ import Base from "../layouts/Base.astro";
           fuzzyCurrentValue(key, values),
         );
         const tableWrap = document.createElement('div');
+        tableWrap.className = 'mf-block-table';
         renderTable(tableWrap, makeTable(paramsColumns, rows), null, ['categoria', 'forma']);
         gridEl.appendChild(chartWrap);
         gridEl.appendChild(tableWrap);
@@ -738,35 +990,59 @@ import Base from "../layouts/Base.astro";
         container.appendChild(block);
       }
 
-      const riskTerms: ChartTerm[] = Object.entries(payload.risk.terms).map(([termKey, term]) => ({
+      const riskTerms: RiskChartTerm[] = Object.entries(payload.risk.terms).map(([termKey, term]) => ({
+        key: termKey,
         display: term.display,
         color: RISK_COLORS[termKey] ?? '#d4d4d4',
         points: term.points,
-        original: null,
       }));
 
-      const riskBlock = document.createElement('section');
-      riskBlock.className = 'mf-block';
-      const riskTitle = document.createElement('h4');
-      riskTitle.className = 'mf-block-title';
-      riskTitle.textContent = 'Riesgo de fallo (salida)';
-      riskBlock.appendChild(riskTitle);
-      const riskWrap = document.createElement('div');
-      riskWrap.className = 'mf-card';
-      const riskBox = document.createElement('div');
-      riskBox.className = 'mf-chart-box';
+      const activeRules = (prediction?.response.activated_rules ?? []).filter((rule) => (rule.strength ?? 0) > 0);
+      const termByKey = new Map(riskTerms.map((term) => [term.key, term]));
+
+      const rulesBox = document.getElementById('salida-rules-box') as HTMLElement;
+      const rulesGrid = document.getElementById('salida-rules-grid') as HTMLElement;
+      rulesGrid.innerHTML = '';
+      if (activeRules.length > 0) {
+        rulesBox.style.display = '';
+        for (const rule of activeRules) {
+          const term = termByKey.get(rule.consequent);
+          if (!term) continue;
+          const item = document.createElement('div');
+          item.className = 'risk-rule';
+          const label = document.createElement('div');
+          label.className = 'risk-rule-label';
+          const shortName = rule.name.split('_')[0] || rule.name;
+          label.innerHTML = `${shortName} → <b>${rule.consequent_display || rule.consequent}</b> <span class="risk-rule-force">fuerza ${rule.strength.toFixed(3)}</span>`;
+          item.appendChild(label);
+          const box = document.createElement('div');
+          box.className = 'risk-rule-chart';
+          const ruleCanvas = document.createElement('canvas');
+          box.appendChild(ruleCanvas);
+          item.appendChild(box);
+          rulesGrid.appendChild(item);
+          createRuleChart(ruleCanvas, term, payload.risk.min, payload.risk.max, rule.strength);
+        }
+      } else {
+        rulesBox.style.display = 'none';
+      }
+
+      const chartBox = document.getElementById('salida-chart-box') as HTMLElement;
+      chartBox.innerHTML = '';
       const riskCanvas = document.createElement('canvas');
-      riskBox.appendChild(riskCanvas);
-      riskWrap.appendChild(riskBox);
-      createMembershipChart(
+      chartBox.appendChild(riskCanvas);
+      createRiskChart(
         riskCanvas,
         riskTerms,
         payload.risk.min,
         payload.risk.max,
-        prediction ? prediction.response.risk_score : null,
+        prediction,
       );
-      riskBlock.appendChild(riskWrap);
-      container.appendChild(riskBlock);
+
+
+      const riskNote = document.getElementById('salida-note') as HTMLElement;
+      riskNote.textContent =
+        'Mini-gráfico por regla activada: la curva punteada es el término completo y el relleno es su contribución recortada a la fuerza de esa regla; el gráfico de abajo agrega la unión de todas las reglas.';
     }
 
     async function loadMemberships(prediction: StoredPrediction | null): Promise<void> {
@@ -892,7 +1168,7 @@ import Base from "../layouts/Base.astro";
           { variable: 'Velocidad de rotación', valor: String(values.rotational_speed), unidad: 'rpm' },
           { variable: 'Torque', valor: String(values.torque), unidad: 'N·m' },
           { variable: 'Desgaste de herramienta', valor: String(values.tool_wear), unidad: 'min' },
-          { variable: 'Brecha térmica (process − air)', valor: `${data.thermal_gap} K`, unidad: 'calculado' },
+          { variable: 'Brecha térmica (process − air)', valor: `${data.thermal_gap}`, unidad: 'K - calculado' },
         ];
         const valueColumns: ColumnDef<typeof valuesRows[number], unknown>[] = [
           { id: 'variable', accessorKey: 'variable', header: 'Variable' },
@@ -987,7 +1263,7 @@ import Base from "../layouts/Base.astro";
         try {
           sessionStorage.setItem(MODE_KEY, mode);
         } catch {
-          /* sin soporte */
+
         }
       }
 
@@ -1005,16 +1281,16 @@ import Base from "../layouts/Base.astro";
               try {
                 sessionStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
               } catch {
-                /* sin soporte */
+
               }
               render(merged);
               void loadMemberships(merged);
             } catch {
-              /* sin conexión con el backend: se mantiene la predicción guardada */
+
             }
           })();
         } catch {
-          /* datos corruptos: se ignora */
+
         }
       }
 
@@ -1043,7 +1319,7 @@ import Base from "../layouts/Base.astro";
             try {
               sessionStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
             } catch {
-              /* sin soporte de storage */
+
             }
             render(merged);
             void loadMemberships(merged);
@@ -1054,7 +1330,7 @@ import Base from "../layouts/Base.astro";
               note.style.display = 'block';
             }
           } catch {
-            /* sin conexión con el backend: se mantiene la predicción guardada */
+
           }
         })();
       }
@@ -1070,12 +1346,14 @@ import Base from "../layouts/Base.astro";
           setModeUI(storedMode);
           render(prediction);
           void loadMemberships(prediction);
-          const stale = (prediction.response.activated_rules ?? []).some(
-            (rule) =>
-              rule.antecedents === undefined ||
-              rule.consequent === undefined ||
-              rule.consequent_display === undefined,
-          );
+          const stale =
+            prediction.response.output_strengths === undefined ||
+            (prediction.response.activated_rules ?? []).some(
+              (rule) =>
+                rule.antecedents === undefined ||
+                rule.consequent === undefined ||
+                rule.consequent_display === undefined,
+            );
           if (stale) {
             refreshStoredPrediction(prediction);
           }

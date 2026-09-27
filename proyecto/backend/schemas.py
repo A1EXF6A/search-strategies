@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, StrictFloat, field_validator, model_validator
 
-from config import INPUT_VARIABLES
+from config import INPUT_VARIABLES, VARIABLE_SPECS
 
 
 class PredictionInput(BaseModel):
@@ -32,9 +32,19 @@ class PredictionInput(BaseModel):
 
     @model_validator(mode="after")
     def check_temperature_coherence(self) -> "PredictionInput":
-        if self.process_temperature <= self.air_temperature:
+        gap: float = self.process_temperature - self.air_temperature
+        gap_spec: dict[str, float] = VARIABLE_SPECS["thermal_gap"]
+
+        if gap <= gap_spec["min"]:
             raise ValueError(
                 "La temperatura del proceso debe ser mayor que la temperatura del aire"
+            )
+
+        if gap > gap_spec["max"]:
+            raise ValueError(
+                f"La brecha térmica (proceso − aire) es {gap} K y supera el rango "
+                f"modelado ({gap_spec['min']}–{gap_spec['max']} K) del dataset AI4I 2020. "
+                "Ajusta las temperaturas para que la brecha quede dentro del rango."
             )
 
         return self
@@ -58,4 +68,5 @@ class PredictionResponse(BaseModel):
     factors: list[str]
     activated_rules: list[RuleActivation]
     memberships: dict[str, dict[str, float]]
+    output_strengths: dict[str, float]
     params_used: str = "optimized"
