@@ -237,7 +237,7 @@ class FuzzySystem:
             list[tuple[str, str]], entry["antecedents"]
         )
 
-        terms = []
+        terms: list[NDArray] = []
 
         for variable, term in antecedents:
             terms.append(self.antecedents[variable][term])

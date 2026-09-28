@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from typing import cast
 
 import pandas as pd
-
 from config import (
     DATASET_COLUMNS,
     DATASET_ENCODING,
@@ -141,3 +140,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

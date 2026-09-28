@@ -1041,8 +1041,6 @@ import Base from "../layouts/Base.astro";
 
 
       const riskNote = document.getElementById('salida-note') as HTMLElement;
-      riskNote.textContent =
-        'Mini-gráfico por regla activada: la curva punteada es el término completo y el relleno es su contribución recortada a la fuerza de esa regla; el gráfico de abajo agrega la unión de todas las reglas.';
     }
 
     async function loadMemberships(prediction: StoredPrediction | null): Promise<void> {

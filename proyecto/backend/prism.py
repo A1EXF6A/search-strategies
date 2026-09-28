@@ -3,9 +3,8 @@ from typing import cast
 import numpy as np
 import pandas as pd
 import skfuzzy as fuzz
-from numpy.typing import NDArray
-
 from config import FUZZY_VARIABLES, TERMS, UNIVERSE_POINTS, VARIABLE_SPECS, VariableSpec
+from numpy.typing import NDArray
 
 FloatArray = NDArray[np.float64]
 
@@ -161,9 +160,7 @@ def run_prism(
                 }
             )
 
-        remaining = cast(
-            pd.DataFrame, remaining[~count_matches(remaining, conditions)]
-        )
+        remaining = cast(pd.DataFrame, remaining[~count_matches(remaining, conditions)])
 
     return rules
 
