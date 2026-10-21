@@ -1,11 +1,10 @@
 from contextlib import asynccontextmanager
 
+from config import MISSING_PARAMS_MESSAGE
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
-from config import MISSING_PARAMS_MESSAGE
 from model import MaintenanceModel
 from schemas import PredictionInput, PredictionResponse
 
@@ -13,7 +12,8 @@ model: MaintenanceModel | None = None
 
 
 async def validation_exception_handler(
-    request: Request, exc: Exception,
+    request: Request,
+    exc: Exception,
 ) -> JSONResponse:
     if not isinstance(exc, RequestValidationError):
         return JSONResponse(status_code=500, content={"detail": "Error interno"})
@@ -24,7 +24,7 @@ async def validation_exception_handler(
         message: str = str(error.get("msg", "Entrada inválida"))
 
         if message.startswith("Value error, "):
-            message = message[len("Value error, "):]
+            message = message[len("Value error, ") :]
 
         messages.append(message)
 
@@ -78,3 +78,4 @@ def memberships() -> dict[str, object]:
         raise HTTPException(status_code=503, detail=MISSING_PARAMS_MESSAGE)
 
     return model.system.memberships_info()
+

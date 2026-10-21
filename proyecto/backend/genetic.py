@@ -5,9 +5,6 @@ from functools import partial
 from typing import Any, cast
 
 import numpy as np
-from deap import base, creator, tools
-from numpy.typing import NDArray
-
 from config import (
     CROSSOVER_RATE,
     DEFAULT_PARAMETERS,
@@ -24,7 +21,9 @@ from config import (
     VARIABLE_SPECS,
     VariableSpec,
 )
+from deap import base, creator, tools
 from fuzzy import FloatArray, FuzzySystem
+from numpy.typing import NDArray
 
 GENE_RANGE: tuple[float, float] = (0.0, 1.0)
 N_GENES: int = len(FUZZY_VARIABLES) * GENES_PER_VARIABLE
@@ -347,4 +346,3 @@ class GeneticOptimizer:
             result.validation_metrics = evaluate_predictions(y_val, y_pred_val)
 
         return result
-

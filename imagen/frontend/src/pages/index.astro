@@ -1,0 +1,603 @@
+---
+const API = import.meta.env.PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+---
+
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Visor RGB · Brillo y Ecualización</title>
+	</head>
+	<body>
+		<header>
+			<h1>Procesador de imágenes RGB</h1>
+			<p>Brillo por canal &middot; Ecualización de luminancia &middot; Histogramas</p>
+		</header>
+
+		<main>
+			<section class="controls">
+				<h2>Controles</h2>
+
+				<label class="file-field">
+					<span>Subir imagen</span>
+					<input id="file" type="file" accept="image/*" />
+				</label>
+
+				<button id="sample-btn" type="button" class="ghost">Usar imagen de ejemplo</button>
+
+				<div class="sliders">
+					<div class="slider" data-channel="r">
+						<div class="slider-head"><span class="dot dot-r"></span>Rojo (R)<output id="out-r">0</output></div>
+						<input id="r" type="range" min="-100" max="100" value="0" step="1" class="range range-r" />
+					</div>
+					<div class="slider" data-channel="g">
+						<div class="slider-head"><span class="dot dot-g"></span>Verde (G)<output id="out-g">0</output></div>
+						<input id="g" type="range" min="-100" max="100" value="0" step="1" class="range range-g" />
+					</div>
+					<div class="slider" data-channel="b">
+						<div class="slider-head"><span class="dot dot-b"></span>Azul (B)<output id="out-b">0</output></div>
+						<input id="b" type="range" min="-100" max="100" value="0" step="1" class="range range-b" />
+					</div>
+				</div>
+
+				<label class="switch">
+					<input id="equalize" type="checkbox" />
+					<span>Ecualizar luminancia (distribuir histograma)</span>
+				</label>
+
+				<div class="row">
+					<button id="reset-btn" type="button" class="ghost">Reiniciar</button>
+					<button id="download-btn" type="button" class="ghost">Descargar</button>
+				</div>
+
+				<p id="status" class="status">Cargando imagen de ejemplo…</p>
+			</section>
+
+			<section class="preview">
+				<h2>Vista previa</h2>
+				<div class="images">
+					<figure>
+						<figcaption>Original <small>(con brillo aplicado)</small></figcaption>
+						<div class="frame"><img id="img-before" alt="Imagen original" /></div>
+					</figure>
+					<figure>
+						<figcaption>Procesada <small>(ecualizada)</small></figcaption>
+						<div class="frame"><img id="img-after" alt="Imagen procesada" /></div>
+					</figure>
+				</div>
+			</section>
+
+			<section class="histograms">
+				<h2>Histogramas</h2>
+				<div class="charts">
+					<figure>
+						<figcaption>Histograma original</figcaption>
+						<canvas id="hist-original" class="hist"></canvas>
+						<ul class="legend">
+							<li><span class="dot dot-r"></span>R</li>
+							<li><span class="dot dot-g"></span>G</li>
+							<li><span class="dot dot-b"></span>B</li>
+							<li><span class="dot dot-y"></span>Luminancia</li>
+						</ul>
+					</figure>
+					<figure>
+						<figcaption>Histograma distribuido (ecualizado)</figcaption>
+						<canvas id="hist-equalized" class="hist"></canvas>
+						<ul class="legend">
+							<li><span class="dot dot-r"></span>R</li>
+							<li><span class="dot dot-g"></span>G</li>
+							<li><span class="dot dot-b"></span>B</li>
+							<li><span class="dot dot-y"></span>Luminancia</li>
+						</ul>
+					</figure>
+				</div>
+			</section>
+		</main>
+
+		<script define:vars={{ API }}>
+			const fileInput = document.getElementById("file");
+			const sampleBtn = document.getElementById("sample-btn");
+			const resetBtn = document.getElementById("reset-btn");
+			const downloadBtn = document.getElementById("download-btn");
+			const sliders = {
+				r: document.getElementById("r"),
+				g: document.getElementById("g"),
+				b: document.getElementById("b"),
+			};
+			const outputs = {
+				r: document.getElementById("out-r"),
+				g: document.getElementById("out-g"),
+				b: document.getElementById("out-b"),
+			};
+			const equalize = document.getElementById("equalize");
+			const statusEl = document.getElementById("status");
+			const imgBefore = document.getElementById("img-before");
+			const imgAfter = document.getElementById("img-after");
+			const canvasOriginal = document.getElementById("hist-original");
+			const canvasEqualized = document.getElementById("hist-equalized");
+
+			let sourceBlob = null;
+			let sourceName = "sample.png";
+			let debounceTimer = null;
+			let requestId = 0;
+			let lastResult = null;
+
+			const CHANNELS = [
+				{ key: "r", color: "#ff5c5c" },
+				{ key: "g", color: "#4ade80" },
+				{ key: "b", color: "#60a5fa" },
+				{ key: "y", color: "#e5e7eb" },
+			];
+
+			function setStatus(text, isError = false) {
+				statusEl.textContent = text;
+				statusEl.classList.toggle("error", isError);
+			}
+
+			function hexToRgba(hex, alpha) {
+				const n = parseInt(hex.slice(1), 16);
+				return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+			}
+
+			function percentile(values, p) {
+				if (!values.length) return 1;
+				const sorted = [...values].sort((a, b) => a - b);
+				const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * p));
+				return sorted[idx] || 1;
+			}
+
+			function drawHistogram(canvas, hist) {
+				const dpr = window.devicePixelRatio || 1;
+				const cssW = canvas.clientWidth || 520;
+				const cssH = canvas.clientHeight || 220;
+				canvas.width = Math.round(cssW * dpr);
+				canvas.height = Math.round(cssH * dpr);
+
+				const ctx = canvas.getContext("2d");
+				ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+				ctx.clearRect(0, 0, cssW, cssH);
+
+				const pad = { top: 12, right: 10, bottom: 20, left: 10 };
+				const plotW = cssW - pad.left - pad.right;
+				const plotH = cssH - pad.top - pad.bottom;
+
+				ctx.fillStyle = "#0e1424";
+				ctx.fillRect(0, 0, cssW, cssH);
+
+				const all = [];
+				CHANNELS.forEach((c) => all.push(...hist[c.key]));
+				const yMax = percentile(all, 0.985) || 1;
+
+				ctx.strokeStyle = "rgba(255,255,255,0.07)";
+				ctx.fillStyle = "rgba(255,255,255,0.4)";
+				ctx.font = "10px ui-monospace, monospace";
+				ctx.textAlign = "center";
+				for (let i = 0; i <= 4; i++) {
+					const val = Math.round((i * 255) / 4);
+					const x = pad.left + (val / 255) * plotW;
+					ctx.beginPath();
+					ctx.moveTo(x, pad.top);
+					ctx.lineTo(x, pad.top + plotH);
+					ctx.stroke();
+					ctx.fillText(String(val), x, cssH - 6);
+				}
+
+				CHANNELS.forEach((c) => {
+					const arr = hist[c.key];
+					ctx.beginPath();
+					ctx.moveTo(pad.left, pad.top + plotH);
+					for (let i = 0; i < 256; i++) {
+						const x = pad.left + (i / 255) * plotW;
+						const y = pad.top + plotH - Math.min(arr[i] / yMax, 1) * plotH;
+						ctx.lineTo(x, y);
+					}
+					ctx.lineTo(pad.left + plotW, pad.top + plotH);
+					ctx.closePath();
+					ctx.fillStyle = hexToRgba(c.color, 0.16);
+					ctx.fill();
+					ctx.strokeStyle = c.color;
+					ctx.lineWidth = 1.2;
+					ctx.stroke();
+				});
+			}
+
+			function syncOutputs() {
+				outputs.r.textContent = sliders.r.value;
+				outputs.g.textContent = sliders.g.value;
+				outputs.b.textContent = sliders.b.value;
+			}
+
+			async function process() {
+				if (!sourceBlob) return;
+				const id = ++requestId;
+				setStatus("Procesando…");
+
+				const form = new FormData();
+				form.append("file", sourceBlob, sourceName);
+				form.append("brightness_r", sliders.r.value);
+				form.append("brightness_g", sliders.g.value);
+				form.append("brightness_b", sliders.b.value);
+				form.append("equalize", equalize.checked ? "true" : "false");
+
+				try {
+					const res = await fetch(`${API}/api/process`, { method: "POST", body: form });
+					if (!res.ok) throw new Error(`El servidor respondió ${res.status}`);
+					const data = await res.json();
+					if (id !== requestId) return;
+
+					imgBefore.src = data.image_before;
+					imgAfter.src = data.image_after;
+					lastResult = data;
+					drawHistogram(canvasOriginal, data.hist_original);
+					drawHistogram(canvasEqualized, data.hist_equalized);
+					setStatus(`Listo · ${data.width}×${data.height}px`);
+				} catch (err) {
+					if (id !== requestId) return;
+					setStatus(`Error: ${err.message}. ¿Está corriendo el backend en ${API}?`, true);
+				}
+			}
+
+			function scheduleProcess() {
+				clearTimeout(debounceTimer);
+				debounceTimer = setTimeout(process, 180);
+			}
+
+			async function loadSample() {
+				setStatus("Cargando imagen de ejemplo…");
+				try {
+					const res = await fetch(`${API}/api/sample`);
+					if (!res.ok) throw new Error(`El servidor respondió ${res.status}`);
+					sourceBlob = await res.blob();
+					sourceName = "sample.png";
+					await process();
+				} catch (err) {
+					setStatus(`No se pudo cargar la muestra desde ${API}.`, true);
+				}
+			}
+
+			fileInput.addEventListener("change", () => {
+				const f = fileInput.files && fileInput.files[0];
+				if (!f) return;
+				sourceBlob = f;
+				sourceName = f.name;
+				process();
+			});
+
+			sampleBtn.addEventListener("click", loadSample);
+
+			Object.values(sliders).forEach((el) => {
+				el.addEventListener("input", () => {
+					syncOutputs();
+					scheduleProcess();
+				});
+			});
+
+			equalize.addEventListener("change", process);
+
+			resetBtn.addEventListener("click", () => {
+				sliders.r.value = "0";
+				sliders.g.value = "0";
+				sliders.b.value = "0";
+				equalize.checked = false;
+				syncOutputs();
+				process();
+			});
+
+			downloadBtn.addEventListener("click", () => {
+				if (!imgAfter.src) return;
+				const a = document.createElement("a");
+				a.href = imgAfter.src;
+				a.download = equalize.checked ? "imagen-ecualizada.png" : "imagen-procesada.png";
+				a.click();
+			});
+
+			window.addEventListener("resize", () => {
+				if (lastResult) {
+					drawHistogram(canvasOriginal, lastResult.hist_original);
+					drawHistogram(canvasEqualized, lastResult.hist_equalized);
+				}
+			});
+
+			loadSample();
+		</script>
+
+		<style is:global>
+			:root {
+				color-scheme: dark;
+				--bg: #0a0e17;
+				--panel: #111a2e;
+				--panel-2: #16203a;
+				--border: #223052;
+				--text: #e6ecf7;
+				--muted: #8ea0c2;
+				--accent: #6ea8fe;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				background: radial-gradient(1200px 600px at 50% -100px, #16233f 0%, var(--bg) 60%);
+				color: var(--text);
+				font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+				min-height: 100vh;
+			}
+
+			header {
+				padding: 28px 24px 8px;
+				text-align: center;
+			}
+
+			header h1 {
+				margin: 0 0 6px;
+				font-size: 1.6rem;
+				letter-spacing: 0.2px;
+			}
+
+			header p {
+				margin: 0;
+				color: var(--muted);
+				font-size: 0.9rem;
+			}
+
+			main {
+				max-width: 1180px;
+				margin: 0 auto;
+				padding: 20px 24px 60px;
+				display: grid;
+				grid-template-columns: 320px 1fr;
+				gap: 20px;
+			}
+
+			section {
+				background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+				border: 1px solid var(--border);
+				border-radius: 16px;
+				padding: 18px;
+			}
+
+			section h2 {
+				margin: 0 0 14px;
+				font-size: 1rem;
+				color: var(--accent);
+				text-transform: uppercase;
+				letter-spacing: 1px;
+			}
+
+			.controls {
+				display: flex;
+				flex-direction: column;
+				gap: 16px;
+				grid-row: span 2;
+			}
+
+			.file-field {
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+				font-size: 0.85rem;
+				color: var(--muted);
+			}
+
+			.file-field input {
+				color: var(--text);
+				font-size: 0.85rem;
+			}
+
+			button {
+				cursor: pointer;
+				border-radius: 10px;
+				padding: 10px 14px;
+				font-size: 0.88rem;
+				border: 1px solid var(--border);
+				transition: border-color 0.15s, background 0.15s;
+			}
+
+			button.ghost {
+				background: #1b2740;
+				color: var(--text);
+			}
+
+			button.ghost:hover {
+				border-color: var(--accent);
+				background: #223255;
+			}
+
+			.sliders {
+				display: flex;
+				flex-direction: column;
+				gap: 14px;
+			}
+
+			.slider-head {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-size: 0.85rem;
+				margin-bottom: 6px;
+				color: var(--muted);
+			}
+
+			.slider-head output {
+				margin-left: auto;
+				font-family: ui-monospace, monospace;
+				color: var(--text);
+			}
+
+			.dot {
+				width: 10px;
+				height: 10px;
+				border-radius: 50%;
+				display: inline-block;
+			}
+
+			.dot-r { background: #ff5c5c; }
+			.dot-g { background: #4ade80; }
+			.dot-b { background: #60a5fa; }
+			.dot-y { background: #e5e7eb; }
+
+			input[type="range"] {
+				width: 100%;
+				-webkit-appearance: none;
+				appearance: none;
+				height: 6px;
+				border-radius: 999px;
+				background: #26324f;
+				outline: none;
+			}
+
+			input[type="range"]::-webkit-slider-thumb {
+				-webkit-appearance: none;
+				appearance: none;
+				width: 16px;
+				height: 16px;
+				border-radius: 50%;
+				border: 2px solid #0a0e17;
+				cursor: pointer;
+			}
+
+			input[type="range"]::-moz-range-thumb {
+				width: 14px;
+				height: 14px;
+				border-radius: 50%;
+				border: 2px solid #0a0e17;
+				cursor: pointer;
+			}
+
+			.range-r::-webkit-slider-thumb { background: #ff5c5c; }
+			.range-g::-webkit-slider-thumb { background: #4ade80; }
+			.range-b::-webkit-slider-thumb { background: #60a5fa; }
+			.range-r::-moz-range-thumb { background: #ff5c5c; }
+			.range-g::-moz-range-thumb { background: #4ade80; }
+			.range-b::-moz-range-thumb { background: #60a5fa; }
+
+			.switch {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				font-size: 0.85rem;
+				color: var(--muted);
+				line-height: 1.3;
+			}
+
+			.switch input {
+				width: 18px;
+				height: 18px;
+				accent-color: var(--accent);
+			}
+
+			.row {
+				display: flex;
+				gap: 10px;
+			}
+
+			.row button {
+				flex: 1;
+			}
+
+			.status {
+				margin: 0;
+				font-size: 0.78rem;
+				color: var(--muted);
+				min-height: 1.2em;
+			}
+
+			.status.error {
+				color: #ff8080;
+			}
+
+			.preview .images {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 14px;
+			}
+
+			figure {
+				margin: 0;
+			}
+
+			figcaption {
+				font-size: 0.82rem;
+				color: var(--muted);
+				margin-bottom: 8px;
+			}
+
+			figcaption small {
+				color: #5f7194;
+			}
+
+			.frame {
+				background: #0b1020;
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				overflow: hidden;
+				aspect-ratio: 4 / 3;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.frame img {
+				max-width: 100%;
+				max-height: 100%;
+				display: block;
+			}
+
+			.histograms {
+				grid-column: 2;
+			}
+
+			.charts {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 14px;
+			}
+
+			canvas.hist {
+				width: 100%;
+				height: 220px;
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				display: block;
+			}
+
+			.legend {
+				display: flex;
+				gap: 16px;
+				list-style: none;
+				margin: 10px 0 0;
+				padding: 0;
+				font-size: 0.78rem;
+				color: var(--muted);
+			}
+
+			.legend li {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+			}
+
+			@media (max-width: 900px) {
+				main {
+					grid-template-columns: 1fr;
+				}
+				.controls {
+					grid-row: auto;
+				}
+				.histograms {
+					grid-column: 1;
+				}
+				.preview .images,
+				.charts {
+					grid-template-columns: 1fr;
+				}
+			}
+		</style>
+	</body>
+</html>

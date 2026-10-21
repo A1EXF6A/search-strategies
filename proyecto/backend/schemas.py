@@ -1,9 +1,8 @@
 import math
 from typing import Annotated
 
-from pydantic import BaseModel, Field, StrictFloat, field_validator, model_validator
-
 from config import INPUT_VARIABLES, VARIABLE_SPECS
+from pydantic import BaseModel, Field, StrictFloat, field_validator, model_validator
 
 
 class PredictionInput(BaseModel):
@@ -14,7 +13,13 @@ class PredictionInput(BaseModel):
     tool_wear: Annotated[float, StrictFloat]
     use_optimized: bool = True
 
-    @field_validator("air_temperature", "process_temperature", "rotational_speed", "torque", "tool_wear")
+    @field_validator(
+        "air_temperature",
+        "process_temperature",
+        "rotational_speed",
+        "torque",
+        "tool_wear",
+    )
     @classmethod
     def validate_finite_and_range(cls, value: float, info) -> float:
         if not math.isfinite(value):
@@ -70,3 +75,4 @@ class PredictionResponse(BaseModel):
     memberships: dict[str, dict[str, float]]
     output_strengths: dict[str, float]
     params_used: str = "optimized"
+

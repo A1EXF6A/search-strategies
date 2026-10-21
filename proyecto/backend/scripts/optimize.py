@@ -4,9 +4,6 @@ from typing import cast
 
 import numpy as np
 import pandas as pd
-from numpy.typing import NDArray
-from sklearn.model_selection import train_test_split
-
 from config import (
     CROSSOVER_RATE,
     DATASET_COLUMNS,
@@ -29,6 +26,8 @@ from config import (
 )
 from fuzzy import FloatArray, FuzzySystem
 from genetic import ClassificationMetrics, GeneticOptimizer, evaluate_predictions
+from numpy.typing import NDArray
+from sklearn.model_selection import train_test_split
 
 
 def load_dataset() -> pd.DataFrame:
@@ -61,7 +60,12 @@ SplitResult = tuple[pd.DataFrame, pd.DataFrame, NDArray[np.int64], NDArray[np.in
 def split_dataset(
     df: pd.DataFrame, y: NDArray[np.int64]
 ) -> tuple[
-    pd.DataFrame, pd.DataFrame, pd.DataFrame, NDArray[np.int64], NDArray[np.int64], NDArray[np.int64]
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    NDArray[np.int64],
+    NDArray[np.int64],
+    NDArray[np.int64],
 ]:
     first_split: SplitResult = cast(
         SplitResult,
@@ -77,7 +81,11 @@ def split_dataset(
     second_split: SplitResult = cast(
         SplitResult,
         train_test_split(
-            temp_df, y_temp, test_size=test_size, stratify=y_temp, random_state=RANDOM_SEED
+            temp_df,
+            y_temp,
+            test_size=test_size,
+            stratify=y_temp,
+            random_state=RANDOM_SEED,
         ),
     )
 
@@ -198,23 +206,38 @@ def main() -> None:
     print("Comparación antes / después (mismo conjunto de test):")
     print("-" * 60)
 
-    delta_ba: float = optimized_test_metrics.balanced_accuracy - baseline_test_metrics.balanced_accuracy
-    delta_precision: float = optimized_test_metrics.precision - baseline_test_metrics.precision
+    delta_ba: float = (
+        optimized_test_metrics.balanced_accuracy
+        - baseline_test_metrics.balanced_accuracy
+    )
+    delta_precision: float = (
+        optimized_test_metrics.precision - baseline_test_metrics.precision
+    )
     delta_recall: float = optimized_test_metrics.recall - baseline_test_metrics.recall
     delta_f1: float = optimized_test_metrics.f1 - baseline_test_metrics.f1
 
-    print(f"  Balanced Accuracy: {baseline_test_metrics.balanced_accuracy:.3f} -> "
-          f"{optimized_test_metrics.balanced_accuracy:.3f}  ({delta_ba:+.3f})")
-    print(f"  Precision:         {baseline_test_metrics.precision:.3f} -> "
-          f"{optimized_test_metrics.precision:.3f}  ({delta_precision:+.3f})")
-    print(f"  Recall:            {baseline_test_metrics.recall:.3f} -> "
-          f"{optimized_test_metrics.recall:.3f}  ({delta_recall:+.3f})")
-    print(f"  F1:                {baseline_test_metrics.f1:.3f} -> "
-          f"{optimized_test_metrics.f1:.3f}  ({delta_f1:+.3f})")
+    print(
+        f"  Balanced Accuracy: {baseline_test_metrics.balanced_accuracy:.3f} -> "
+        f"{optimized_test_metrics.balanced_accuracy:.3f}  ({delta_ba:+.3f})"
+    )
+    print(
+        f"  Precision:         {baseline_test_metrics.precision:.3f} -> "
+        f"{optimized_test_metrics.precision:.3f}  ({delta_precision:+.3f})"
+    )
+    print(
+        f"  Recall:            {baseline_test_metrics.recall:.3f} -> "
+        f"{optimized_test_metrics.recall:.3f}  ({delta_recall:+.3f})"
+    )
+    print(
+        f"  F1:                {baseline_test_metrics.f1:.3f} -> "
+        f"{optimized_test_metrics.f1:.3f}  ({delta_f1:+.3f})"
+    )
     print()
 
-    print(f"Mejor fitness durante la evolución: {result.best_fitness:.4f} "
-          f"(balanced accuracy sobre muestra de fitness)")
+    print(
+        f"Mejor fitness durante la evolución: {result.best_fitness:.4f} "
+        f"(balanced accuracy sobre muestra de fitness)"
+    )
     print()
 
     OPTIMIZED_PARAMS_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -234,7 +257,9 @@ def main() -> None:
         },
         "fitness": {
             "balanced_accuracy_best_generation": round(result.best_fitness, 4),
-            "balanced_accuracy_train": round(optimized_train_metrics.balanced_accuracy, 4),
+            "balanced_accuracy_train": round(
+                optimized_train_metrics.balanced_accuracy, 4
+            ),
             "validation": result.validation_metrics.to_dict(),
         },
         "parameters": best_parameters,
@@ -251,3 +276,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
